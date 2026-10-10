@@ -1,0 +1,11 @@
+{
+  "task": "Fix intermittent cache results",
+  "explored": true,
+  "findings": ["The existing single-user cache checks pass, but different identities sometimes receive the same result."],
+  "unknowns": ["State ownership or cache-key isolation may be involved."],
+  "scope": "local",
+  "risk": "medium",
+  "rootCauseKnown": false,
+  "requirementsClear": true,
+  "verificationReady": false
+}

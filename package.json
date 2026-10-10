@@ -1,0 +1,25 @@
+{
+  "name": "adaptive-skill-router",
+  "version": "0.1.0",
+  "description": "Explore first. Discover local Codex skills and choose only the workflow a task needs.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "asr": "dist/cli.js" },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "skills", "docs", "examples", "README.md", "README.zh-CN.md", "LICENSE", "CONTRIBUTING.md"],
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "eval": "npm run build && node scripts/evaluate.mjs",
+    "check": "npm test && npm run eval",
+    "prepack": "npm run build"
+  },
+  "author": "Ethan Chen (https://github.com/sky-k111)",
+  "repository": { "type": "git", "url": "git+https://github.com/sky-k111/adaptive-skill-router.git" },
+  "homepage": "https://github.com/sky-k111/adaptive-skill-router#readme",
+  "bugs": { "url": "https://github.com/sky-k111/adaptive-skill-router/issues" },
+  "license": "MIT",
+  "keywords": ["agent-skills", "codex", "adaptive-workflow", "skill-router"],
+  "dependencies": { "smol-toml": "^1.0.0", "yaml": "^2.0.0" },
+  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.0.0" }
+}

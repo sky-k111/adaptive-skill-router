@@ -1,0 +1,39 @@
+# Architecture and boundaries
+
+The host agent explores code and existing checks, identifies an actual method gap, then retrieves candidate capabilities if useful. It can read a candidate, use only relevant methods, verify the result, and stop. Evidence updates can return it to direct execution. Running every step of this loop for every edit would defeat the purpose.
+
+## Components
+
+- `scanner.ts`: bounded discovery, YAML metadata, Codex invocation restrictions, filesystem identities, source fingerprints and diagnostics.
+- `native.ts`: a short-lived JSON-RPC app-server client calling only `initialize` and `skills/list`. No model turn. The trusted executable is caller-supplied or the installed `codex` executable.
+- `router.ts`: structured evidence validation, method-gap advice, and lightweight bilingual metadata retrieval. `selectedSkills` is always empty: the CLI never claims to make the final semantic selection.
+- `integration.ts`: project-local instruction preview and writes, preserving existing text and making backups. Generated guidance reuses the distributed Skill body, copies its conditional routing reference and appends trusted CLI/project bindings, so capability reuse and third-party policy boundaries do not drift between separately maintained instructions. Reference collisions and stale previews stop before mutation. Whole-plan checks reject redirected parent directories and changed previews before initial mutation; writes are not a transactional filesystem operation. Concurrent directory replacement remains outside its guarantees.
+- `cli.ts`: `scan`, `route`, `inspect`, and `init`; JSON output supports other tools without invoking another model.
+
+There is no cloud index, embedding service, shell hook, API classifier, global instruction rewrite, automatic dependency installation, or persistent agent process.
+
+## Discovery is layered
+
+Disk mode inventories supported and compatibility roots. Native mode asks a fresh Codex CLI process for its own catalog, then reads metadata at the returned paths. Neither proves the exact skill catalog of an already-running desktop session. Native runtime records currently use custom provenance rather than reconstructing Codex's internal scope hierarchy.
+
+Without a Git root, default disk project discovery remains limited to the requested working directory and emits `project-scope-current-directory`. It does not silently scan ancestor projects. Generated commands bind the intended project root; an explicit extra root can inventory an ancestor library without registering it with Codex. Use an already-reliable host catalog rather than scanning again solely to demonstrate the workflow.
+
+Plugin caches remain unverified in disk mode. Symlink/junction cycles terminate through canonical-directory tracking. Different paths to one manifest deduplicate; equal names at different manifests remain separate. Paths and fingerprints are local identities, not portable IDs between machines.
+
+Manifests are read locally to parse metadata, estimate body length and flag broad triggers or possible downstream calls. Bodies are not included in scan JSON. `inspect` is the on-demand disclosure to the host. The character-based token estimate is approximate and excludes dependencies, downstream calls and any model's tokenizer.
+
+## Routing limitations
+
+Evidence is asserted by the host. The CLI validates its shape and exact task binding but cannot prove exploration, truth, impact, or freshness beyond that binding. Repeated tasks can still carry stale evidence unless the host updates its observations.
+
+The current policy considers planning candidates for unresolved requirements or observed coordination needs (`coordinationNeeded: true`). Cross-module scope alone creates no planning gap. Unknown risk/scope usually returns exploration; `stalled` allows considering a systematic investigation. Relevant method hints are recognized in name/description with regular expressions. Common English words are excluded from overlap scores. Domain matching uses task overlap; it may miss synonyms, languages other than English/Chinese, subtle domains, or a Skill with poor metadata.
+
+Broad workflow Skills can appear in a shortlist when their metadata matches an observed gap. Their advisory does not establish value or establish harm. The host must inspect relevant content and the cost of its invocation chain. Blanket suppression would also discard useful methods embedded in overly broad packages.
+
+Invocation permissions are respected, but this tool is not a security boundary. Managed policy, tool access, runtime approvals, sandbox constraints and explicit user instructions belong to Codex. Reading a Skill is not authorization to execute its scripts or follow untrusted instructions. Route output cannot override those boundaries.
+
+## Upstream references
+
+Codex discovery roots, symbolic links, optional `agents/openai.yaml`, and implicit-invocation policy are described in [OpenAI's Skills documentation](https://developers.openai.com/codex/skills/). Runtime `skills/list` and per-working-directory extra roots are documented in [OpenAI's app-server reference](https://developers.openai.com/codex/app-server/). The current CLI does not set runtime extra roots.
+
+Projects to compare by problem and mechanism, without claiming the same scope or universal superiority: [jax-agent/skill-router](https://github.com/jax-agent/skill-router), [kenming/codex-route-advisor](https://github.com/kenming/codex-route-advisor), [Superpowers](https://github.com/obra/superpowers), and [Spec Kit](https://github.com/github/spec-kit). Their current contents and integration behavior need version-specific checks before adoption.
