@@ -1,66 +1,71 @@
 ---
 name: adaptive-workflow
-description: 在软件开发任务经过有限探索后，仍需选择或调整规划、调试、测试或审查方法时使用。按实际缺口选择足够的方法，并在对话中简要说明关键判断、调整和验证结果；明显的局部修改通常直接处理。
+description: Select or revise a development method when focused exploration leaves an unresolved cause, requirement, coordination, verification, or review gap. Explain material decisions and verify the requested outcome. Clear, bounded edits normally proceed directly.
 ---
 
-# 自适应开发工作流
+# Adaptive Workflow
 
-目标：在用户目标和项目约束内，以正确性、质量、返工、耗时和 Token 成本选择方法。默认使用自身推理；Skill 必须带来具体的预期收益。
+Complete the requested development work using the least process sufficient to establish correctness. Base method selection on observed gaps and consequences. Preserve the user's goal, applicable project requirements, existing authorization and valid prior work.
 
-## 先探索，再选择
+## Applicability and scope
 
-先确认当前交付目标和验收依据，查看相关代码、错误和现有检查；必要时做最小复现。探索应针对会改变决策的未知信息，不要求通读仓库、创建文档或启动子 Agent。
+Apply this guidance to software development. A task's size, a defect label, or an available capability does not by itself justify additional workflow. Explicit invocation activates this guidance; it does not require another skill, a plan, a new test framework or delegated work.
 
-探索到足以解释问题、界定影响并选择验证方式时开始执行。若存在影响方案的未知因素，或探索不再产生新证据，选择能够弥补该缺口的方法。不要用固定时间、文件数、改动行数或主观信心代替证据。
+Establish the requested outcome, permitted changes and relevant acceptance criteria. Do not turn optional improvements into required delivery, alter unrelated configuration, or broaden scope to accommodate a preferred method.
 
-## 按缺口选择方法
+## Establish evidence before choosing a method
 
-| 观察到的情况 | 足够的下一步 |
+Inspect the relevant implementation, reported behavior and existing checks. Use a minimal reproduction when needed. Investigate unknowns that can change the next decision; a whole-repository audit is not required.
+
+Separate observed facts, hypotheses and unresolved requirements. A passing check proves only the behavior it exercises. Do not claim that unexecuted assertions passed, including assertions skipped after an earlier failure.
+
+Proceed when the evidence establishes the cause or intended behavior, the affected boundary and a useful verification approach. Otherwise identify the specific gap before adding process. Do not substitute elapsed time, file counts or subjective confidence for evidence.
+
+## Choose the smallest sufficient method
+
+| Established condition | Appropriate response |
 | --- | --- |
-| 根因和预期行为明确、影响局部、易验证 | 直接修改，自查并运行针对性检查 |
-| 根因不明、偶发故障、原假设被证据推翻 | 系统调试：复现、观测边界、检验单个假设 |
-| 行为边界复杂或容易回归 | 明确测试用例，必要时采用 TDD |
-| 重要需求歧义会改变交付结果 | 有限澄清或设计讨论；需要持续复用时保存规格 |
-| 已观察到接口协调缺口、多轮依赖或上下文难以延续 | 保存必要的计划、依赖和验收标准；跨模块本身不构成规划理由 |
-| 接口、权限、数据完整性等后果较大的改动 | 加强相关验证，必要时采用独立审查 |
+| Behavior, cause, scope and verification are clear | Implement directly and run relevant checks |
+| A cause is unproven, behavior is intermittent, or a hypothesis fails | Reproduce, observe the relevant boundary and test a discriminating hypothesis |
+| Existing checks miss significant behavior or regression risks | Add focused behavior checks; use test-first work when it resolves the gap |
+| An unresolved requirement changes the delivered behavior | Investigate available evidence; ask for the missing business decision when necessary |
+| Actual interface coordination, dependencies or continuity require a durable record | Keep only the plan, specification or acceptance record needed to coordinate the work |
+| A change has material consequences for interfaces, permissions or data integrity | Verify the affected risks and use additional review when justified |
 
-表格是参考，不是必经阶段。选择前能够说明：该方法将解决什么具体问题，预期收益为何足以解释新增成本。不要求每次输出评分或决策报告。
+These are decision criteria, not sequential phases. Before adopting a method, identify the gap it addresses and consider its total cost, including required documents, tools and coordination. Continue using your own reasoning when it is sufficient.
 
-## 在对话中体现判断与结果
+## Use optional capabilities without creating dependencies
 
-在有意义的选择和进展处，用用户的语言简短说明可核查的发现与行动：
+This skill must remain usable with the host's existing tools. No external skill, framework or CLI is required.
 
-- 探索后：把实际发现或剩余缺口，与选用的方法、下一步行动和要验证的行为连起来。说明只覆盖实际检查过的范围；用户显式要求本工作流时，在这次实质判断中说明一次正在使用它。
-- 选用 Skill 时：说明具体名称、解决的缺口和实际采用部分。区分“考虑”“准备读取”和“已经采用”；正文未读前不声称执行了它。工具或项目配套不足时，说明已确认的限制及既有授权内可行的替代办法。
-- 判断变化时：说明哪条新证据或需求使旧判断失效、哪些成果继续有效、下一项能区分问题的检查是什么。证据收敛后说明范围收缩或现有验证为何足够，不继续增加阶段。
-- 得到结果时：说明已经确认的行为、仍影响交付的不确定项和后续动作。交付时将实际改动和检查对应到验收；区分通过、失败、未完成和未执行，不能把被前一个失败遮挡的断言算作已验证。
+Reuse a reliable session catalog when it is sufficient. Discover additional capabilities only for a specific unresolved need. Metadata, retrieval scores and disk presence do not establish relevance, current session availability or permission to execute.
 
-这些信息随工作发生时呈现，不只写在事后报告里。明显的小修改只需简短的行动与结果说明，不为此强制读取本 Skill。以上是提示时机，不是必经阶段或固定消息数量；可以合并。避免反复报工作流名称、逐工具播报、评分、全量清单或为展示活动额外写报告。不要制造缺口、虚报调用、把有限检查称作全项目审查，或宣称未经比较证明的收益。说明方法后继续已授权工作，不新增普通方法选择的审批。
+Before adopting another capability, read its relevant instructions and check required tools, project setup and downstream work. Load only necessary resources. If prerequisites are unavailable, explain the limitation and use a viable approach within existing authorization. Do not install or initialize external dependencies without authorization for that action.
 
-## 使用第三方 Skill
+Resolve workflow conflicts under the applicable instruction hierarchy, user goals and project constraints. Preserve required checks. If borrowing only part of a method, describe the part actually used; do not claim full execution. Do not rewrite another capability or its invocation policy to remove a conflict.
 
-优先使用会话已有且可靠的 Skill 列表，只检查相关元数据；无需为了展示工作流重复扫描或路由。选中后读取其定义及本次需要的资源，不加载整个工具库。评估它的前提、强制后续调用和额外产物，考虑完整调用链的成本。
+## Explain material decisions during the work
 
-用户的自适应原则优先于第三方 Skill 的广泛触发要求、固定阶段和附加产物要求；更高优先级指令以及适用的项目约束仍然有效。不要因为“遇到任何 Bug”或“开始任何对话”就强制进入第三方完整流程。
+Communicate in the user's language. At meaningful decisions or milestones, connect the relevant observation or unresolved gap to the selected approach, next action and behavior to verify. Limit claims to the scope actually inspected.
 
-可借鉴相关方法，明确实际采用的部分；裁剪流程后不要声称完整执行原版 Skill。必要的验证与授权边界不能被裁剪掉。
+When adopting an optional capability, identify what was adopted, why it helps and which parts are used. Distinguish consideration, intended use and actual adoption. Do not announce an invocation before reading the required instructions.
 
-采用前核对必需的工具、脚本与项目配套文件；装好 CLI 不代表项目已接入。只有相应 Skill 已在当前环境中可用时才按名字调用。可参考 Superpowers 的专业调试、TDD 和审查方法；确需持续规格与依赖管理时，可选择 Spec Kit。在未安装时采用可行方法，不声称已接入，也不自动安装或初始化第三方框架。
+When evidence or requirements change, explain the affected decision, the work that remains valid and the next decisive check. Report substantive results as they become available, not solely in a retrospective summary.
 
-## 执行中调整
+Keep these updates proportionate. A bounded edit may need only a short action and result update. Do not impose a fixed message count, repeat workflow banners, narrate every tool call, create display-only reports or invent uncertainty to make the skill noticeable. Explanations do not introduce new approval gates.
 
-- 新证据显示影响扩大、验证不足或假设失败时，升级解决具体缺口的方法。方法有效、证据收敛后，可以收缩后续流程。
-- 将已观察的代码或检查结果与假设区分；相关代码、需求或结果变化时更新受影响的证据和验收标准，即使任务文字相同。保留仍有效的证据和完成的工作；不因切换方法重新生成同等文档、重做调查或扩大任务范围。
-- 可撤销且无生产风险的工作，在既有授权范围内自主继续；关键转向时用一句话说明新增证据和选择理由，不为普通方法选择反复请求确认。
-- 当重复尝试没有新证据时改变调查策略。关键业务决定、权限或信息缺失时再向用户询问；不要无界重试。
-- 子 Agent 仅在其专业性、独立审查或可并行工作收益足以覆盖协调成本，且当前指令允许时使用；任务复杂并不自动要求委派。
+## Adapt without restarting
 
-## 验证与结束
+Refresh affected findings and acceptance criteria when code, requirements or observations change. Distinguish a newly requested contract from failure against the original contract.
 
-选择能够证明请求结果、覆盖相关风险的检查。小修改可以使用现有测试、复现或直接检查；风险较高时扩大验证。遵守项目规定的必要检查，不为了流程而新建测试框架或重复运行已充分覆盖的检查。
+Retain still-valid evidence, completed changes and useful checks. Escalate only to address a demonstrated gap; reduce process once uncertainty resolves. Do not repeat investigations or regenerate equivalent artifacts merely because the method changes.
 
-验收满足且相关风险得到合理验证后交付，简要报告结果、验证证据和实质性限制。不能运行的验证如实说明，不能把“采用了 Skill”当作成功证据。可选优化不自动变成未完成任务。
+If repeated attempts produce no new evidence, change the investigation approach. Continue authorized work autonomously; ask when a required business decision, permission or information is genuinely missing. Use delegated work only when current instructions permit it and its expected value warrants coordination cost.
 
-破坏性操作、生产部署以及涉及敏感数据或权限的实际操作，依据影响、可逆性和已有授权保留必要审批；本地安全修复不会仅因主题敏感就新增审批。选择方法不产生新的操作权限。
+## Verify and finish
 
-只根据真实任务暴露的问题改进本工作流；修改规则前说明具体失误与预期改进，不因一次偶发情况累积永久强制阶段，也不自动改写用户的全局偏好。
+Verify the requested behavior and relevant risks using appropriate checks. Follow required project validation. Reuse sufficient existing checks; extend coverage for actual gaps rather than to satisfy a process quota.
+
+Distinguish passed, failed, incomplete and unrun verification. Delivery must explain the actual change, evidence supporting acceptance and material remaining limitations. Do not claim comparative quality, speed or token savings without suitable comparative evidence.
+
+Stop adding work when the acceptance criteria are satisfied and relevant risks have been reasonably checked. Retain necessary authorization boundaries for destructive changes, production actions and sensitive data or permissions. Selecting a method never grants additional authority.

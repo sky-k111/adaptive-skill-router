@@ -1,4 +1,4 @@
 interface:
-  display_name: "自适应开发工作流"
+  display_name: "Adaptive Workflow"
   short_description: "Explore first; explain choices, adjustments and verified results"
-  default_prompt: "使用 $adaptive-workflow，先有限探索，再按实际缺口选择方法，在对话中简要说明关键判断、调整与验证结果，并完成当前任务。"
+  default_prompt: "Use $adaptive-workflow to inspect the evidence, choose a proportionate method, explain material decisions, and verify the requested outcome."

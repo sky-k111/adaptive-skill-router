@@ -68,4 +68,4 @@ Run paired trials on clean copies of representative real tasks, with the same mo
 
 Measure acceptance-test correctness, regression defects, scope creep, rework, elapsed time, user interruptions, and observed token usage when the platform exposes it. Treat reading and chained Skill costs as part of total execution cost. Count failed and incomplete runs, and document unavailable metrics. Do not use the number of invoked Skills or completed workflow stages as the target metric.
 
-Native catalog success on one machine demonstrates that executable/version's protocol compatibility. Cross-platform CI checks portable code and policy; it does not install Codex or certify desktop plugin/session equivalence. Superpowers and Spec Kit interoperability need separate, version-pinned evaluations.
+Native catalog success on one machine demonstrates that executable/version's protocol compatibility. Cross-platform CI checks portable code and policy; it does not install Codex or certify desktop plugin/session equivalence. External workflow interoperability requires separate, version-pinned evaluations.
