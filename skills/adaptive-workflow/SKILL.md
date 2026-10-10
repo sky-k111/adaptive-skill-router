@@ -48,6 +48,8 @@ Resolve workflow conflicts under the applicable instruction hierarchy, user goal
 
 Communicate in the user's language. At meaningful decisions or milestones, connect the relevant observation or unresolved gap to the selected approach, next action and behavior to verify. Limit claims to the scope actually inspected.
 
+When using this guidance, identify Adaptive Workflow once in the first substantive update alongside the evidence and decision it supports. This makes actual adoption visible without a separate activation banner. If it was only considered, describe it as a candidate rather than an active method.
+
 When adopting an optional capability, identify what was adopted, why it helps and which parts are used. Distinguish consideration, intended use and actual adoption. Do not announce an invocation before reading the required instructions.
 
 When evidence or requirements change, explain the affected decision, the work that remains valid and the next decisive check. Report substantive results as they become available, not solely in a retrospective summary.

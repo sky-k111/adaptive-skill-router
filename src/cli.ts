@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { scanSkills, readSkill } from './scanner.js';
-import { routeTask } from './router.js';
+import { routeTask, validateEvidence } from './router.js';
 import { planIntegration, writeIntegration } from './integration.js';
 import { scanNativeSkills } from './native.js';
 import type { ScanOptions, Root } from './types.js';
@@ -47,22 +47,30 @@ async function main() {
     return;
   }
   if (!['scan', 'route', 'inspect'].includes(command)) throw new Error(`Unknown command: ${command}`);
+  // Validate request-only inputs before accessing a disk or native catalog.
+  if (command === 'scan' && args.length) throw new Error('scan takes no positional arguments.');
+  if (command === 'inspect' && args.length !== 1) throw new Error('inspect requires one exact skill id.');
+  let task = '';
+  let evidence: unknown;
+  const limit = values.limit === undefined ? undefined : Number(values.limit);
+  if (command === 'route') {
+    if (values['task-file'] !== undefined && args.length) throw new Error('Choose a positional task or --task-file, not both.');
+    task = values['task-file'] !== undefined ? (await readFile(resolve(cwd, values['task-file']), 'utf8')).trimEnd() : args.join(' ');
+    if (!task.trim()) throw new Error('A non-empty task is required.');
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 20)) throw new Error('Candidate limit must be an integer between 1 and 20.');
+    if (values.evidence !== undefined) evidence = validateEvidence(JSON.parse(await readFile(resolve(cwd, values.evidence), 'utf8')), task);
+  }
   if (values['no-defaults'] && !values.root?.length) throw new Error('--no-defaults requires at least one --root.');
   const options: ScanOptions = { cwd, extraRoots: values.root, includePluginCache: values['include-plugin-cache'] };
   if (values['no-defaults']) options.roots = values.root!.map(path => ({ path: resolve(cwd, path), host: 'codex', scope: 'custom' } satisfies Root));
   if (values.native && (values.root?.length || values['no-defaults'] || values['include-plugin-cache'])) throw new Error('--native uses the Codex runtime catalog; do not combine it with disk root options.');
   const catalog = values.native ? await scanNativeSkills({ ...options, binary: values['codex-bin'] }) : await scanSkills(options);
   if (command === 'scan') {
-    if (args.length) throw new Error('scan takes no positional arguments.');
     output(catalog, `${catalog.skills.length} Codex skills discovered\n${catalog.skills.map(s => `${s.id}  ${s.name}${s.disabled ? ' [disabled]' : !s.automatic ? ' [explicit only]' : ''}${s.availability === 'unverified-plugin' ? ' [unverified plugin]' : ''}\n  ${s.description}\n  ${s.path}`).join('\n')}\n${catalog.diagnostics.length} diagnostic(s); use --json for details.`);
   } else if (command === 'route') {
-    if (values['task-file'] && args.length) throw new Error('Choose a positional task or --task-file, not both.');
-    const task = values['task-file'] ? (await readFile(resolve(cwd, values['task-file']), 'utf8')).trimEnd() : args.join(' ');
-    const evidence = values.evidence ? JSON.parse(await readFile(resolve(cwd, values.evidence), 'utf8')) : undefined;
-    const decision = routeTask(task, catalog, { evidence, limit: values.limit ? Number(values.limit) : undefined, requestedSkills: values.skill });
+    const decision = routeTask(task, catalog, { evidence, limit, requestedSkills: values.skill });
     output({ ...decision, diagnostics: catalog.diagnostics }, `${decision.action}\n${decision.reasons.join('\n')}\n${decision.candidates.map(s => `Consider ${s.name} (${s.id}): ${s.reasons.join(' ')}`).join('\n')}\n${decision.verification}`);
   } else {
-    if (args.length !== 1) throw new Error('inspect requires one exact skill id.');
     const skill = catalog.skills.find(s => s.id === args[0]);
     if (!skill) throw new Error('Skill id not found. Run scan with the same roots.');
     const content = await readSkill(skill);

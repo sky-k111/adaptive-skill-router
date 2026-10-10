@@ -31,7 +31,7 @@ Before adopting a candidate, check its required tools, scripts and project setup
 
 Use brief, natural progress messages in the user's language at meaningful decisions and milestones:
 
-- After relevant exploration, connect a concrete observation or remaining gap to the chosen method, next action and behavior to verify. Bound claims to the code actually inspected. When this workflow is explicitly requested, identify it once with that substantive decision.
+- After relevant exploration, connect a concrete observation or remaining gap to the chosen method, next action and behavior to verify. Bound claims to the code actually inspected. When this guidance is actually used, identify it once with that substantive decision; merely considering it is not adoption.
 - When selecting another Skill, name it and the gap it should address. Distinguish considering, preparing to read, and actually adopting it; describe the portion used honestly. If prerequisites are missing, explain the limitation and useful fallback within existing authorization.
 - When new evidence or requirements invalidate a decision, state what changed, which work remains valid and the next decisive check. When uncertainty resolves, explain the resulting smaller scope or sufficient verification rather than continuing extra phases.
 - At a meaningful result, explain what has been established and what still matters. At delivery, connect the actual change and checks to acceptance; distinguish passed, failed, incomplete and unrun verification. Do not infer that later assertions ran after an earlier failure.

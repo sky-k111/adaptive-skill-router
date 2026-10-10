@@ -47,6 +47,18 @@ Use $adaptive-workflow to investigate this failure, make the necessary change, a
 
 实际任务可以继续用中文描述。安装后，Codex 也可以根据任务与 Skill 描述的匹配情况考虑使用；安装并不意味着每条消息都会触发它。用户要求和项目约束始终决定工作边界。
 
+### 用真实任务体验
+
+从项目里一个能够复现的问题开始，说明现在的现象、期望结果，以及已有的复现步骤或测试。下面的占位内容可以替换成中文：
+
+```text
+Use $adaptive-workflow to fix this issue in the current project: [observed behavior]. Expected: [required behavior]. Reproduce with: [command or test].
+```
+
+把过程说明与实际改动对照着看：依据是什么，为什么这样处理，检查证明了哪些行为。原因明确的小问题可以直接修正。实际采用本 Skill 时，首次说明实质判断的消息应提到 Adaptive Workflow，并说明它帮助作出了什么决定。
+
+执行中需要调整需求时，把新增的预期行为说清楚。随后应能看到哪项判断发生变化、哪些已完成的工作继续有效。这种体验可以帮助你观察它如何适应变化，但不能单凭一次体验判断它优于默认 Codex。
+
 ## 在对话中如何体现
 
 工作推进到重要判断或实质进展时，应让用户知道：目前确认了什么，还缺什么信息，为什么采取这个方法，接下来要检查哪种行为。需求或证据变化时，应说明原方案哪里需要调整、哪些成果可以继续使用。交付时，应明确验证范围和未验证事项。

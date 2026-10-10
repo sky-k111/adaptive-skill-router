@@ -49,6 +49,18 @@ Use $adaptive-workflow to investigate this failure, make the necessary change, a
 
 Codex can also consider the installed skill when its description matches the task. Installation does not guarantee selection for every request. Project instructions and user requirements continue to govern execution.
 
+### Try it on a real task
+
+Start with a reproducible issue in your project. Include the observed behavior, expected result and a relevant command or test when available:
+
+```text
+Use $adaptive-workflow to fix this issue in the current project: [observed behavior]. Expected: [required behavior]. Reproduce with: [command or test].
+```
+
+Read the progress updates alongside the actual changes. You should be able to see which evidence supports the approach, why any additional method is needed, and what the checks establish. A clear fix may proceed directly. When the guidance is used, the first substantive update identifies Adaptive Workflow and the decision it supports.
+
+If the requirement changes during execution, state the new behavior explicitly. The next update should explain the affected decision and which completed work remains useful. This is a practical way to inspect adaptation; it is not a benchmark against default Codex.
+
 ## What appears in the conversation
 
 At meaningful decisions, progress updates explain:
