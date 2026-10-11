@@ -133,6 +133,8 @@ These checks require Node.js 22 or newer. Passing them establishes the tested be
 
 A [repeated behavior trial](docs/benchmark-2026-10-11.md) found less input usage on a clear repair with a shared process-skill library, while independent acceptance stayed equal. It found no repeated advantage over bare Codex. The report includes all outcomes and limits; it does not establish automatic activation or general savings.
 
+A [real-project archive repair](docs/real-project-2026-10-11.md) passed the frozen checks across all configurations but exposed compatibility regressions during additional review. It did not establish a stable quality or cost advantage. The report records the preparation flaw, all outcomes and the targeted guidance correction.
+
 ## Contributing and license
 
 See [Contributing](CONTRIBUTING.md) for development and reporting requirements. Report reproducible problems through [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues).

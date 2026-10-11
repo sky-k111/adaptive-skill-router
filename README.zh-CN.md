@@ -126,6 +126,8 @@ npm run check
 
 [重复行为对照](docs/benchmark-2026-10-11.zh-CN.md)记录了一个限定的收益场景：同一流程技能库下，处理要求明确的小修改时，输入 Token 减少，独立验收结果保持一致。直接与普通 Codex 比较时，没有取得重复优势。报告保留了全部结果及限制，不能据此宣称安装后自动生效或普遍节省 Token。
 
+[真实项目归档修复](docs/real-project-2026-10-11.zh-CN.md)中，各组都通过了固定验收，但补充复核仍发现兼容性回归，没有证明稳定的质量或成本优势。报告保留了副本准备过程的缺陷、全部结果及据此进行的具体方法修正。
+
 ## 贡献与许可
 
 贡献前请阅读 [贡献指南](CONTRIBUTING.md)。发现问题时，可在 [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues) 提供复现步骤、预期行为和实际结果。

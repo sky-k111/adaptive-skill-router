@@ -38,7 +38,7 @@ These are decision criteria, not sequential phases. Before adopting a method, id
 
 Use these references when their trigger is observed; do not load all of them at task entry.
 
-- [Investigation](references/investigation.md): competing explanations remain, a failure depends on ordering or hidden state, or an attempted fix fails. Use it to choose an observation that separates hypotheses before changing behavior.
+- [Investigation](references/investigation.md): competing explanations remain, a failure depends on ordering or hidden state, an attempted fix fails, or a new restriction leaves required compatibility unverified. Use it to separate hypotheses and check the behavior a proposed fix must preserve.
 - [Capability selection](references/capability-selection.md): an additional skill or tool might resolve a specific gap, but its suitability, prerequisites or downstream work are uncertain. Use it to decide what to adopt, borrow or decline.
 - [Continuity](references/continuity.md): a requirement change, handoff or resumed task makes the validity of prior decisions or checks uncertain. Use it to identify affected evidence and preserve the rest. A clear local change needs no checkpoint.
 

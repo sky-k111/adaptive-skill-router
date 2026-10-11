@@ -1,7 +1,7 @@
 <!-- adaptive-workflow:reference investigation -->
 # Investigation that separates explanations
 
-Read when competing causes, timing or state remain unresolved, or an attempted fix fails. Start from the smallest failing boundary; a full project audit is not required.
+Read when competing causes, timing or state remain unresolved, an attempted fix fails, or a proposed restriction leaves required compatibility unverified. Start from the smallest affected boundary; a full project audit is not required.
 
 ## Make the next observation decisive
 
@@ -32,6 +32,10 @@ This is a reasoning aid, not a mandatory report or a fixed number of hypotheses.
 Use counters, traces and minimal reproductions that expose a transition. Sleeps and repeated successful runs do not establish a particular interleaving. Inject a dependency or gate at an existing boundary when possible; keep diagnostic-only instrumentation out of the delivered behavior unless required.
 
 ## Repair and reassess
+
+When tightening validation or another acceptance boundary, map each new restriction to the fields, modes or callers the contract actually constrains. A known defect cause does not establish that a stricter fix preserves required valid behavior. Check the reported invalid input and a valid counterpart that a plausible overbroad fix would reject. For a restriction on a required field, the useful counterpart may be a valid optional field outside that restriction's scope; ordinary fixtures may exercise neither distinction.
+
+Derive that counterpart from a supported fixture, changing only the relevant unrestricted property. Judge validity against the current contract: old acceptance alone does not make an input valid under an explicitly changed requirement. Preserve compatible behavior outside the changed boundary rather than extending a restriction for consistency. Add checks for demonstrated gaps, not an exhaustive inventory of possible inputs.
 
 Before editing, state the invariant the fix must restore. For shared asynchronous work, distinguish a caller's result from authority to update current state; completion order alone need not determine which request owns that state. Verify relevant identities, success/failure paths and completion orders independently.
 
