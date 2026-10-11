@@ -64,6 +64,24 @@ Explicitly loading updated guidance is a positive control for readability and ad
 
 ## Comparative trials
 
+### Operational references and handoff
+
+Evaluate the investigation, capability-selection and continuity references through an independent task, rather than assertions that their prose contains particular phrases. One useful design uses the asynchronous resource-cache contract above and includes plausible optional capabilities with different prerequisites and costs. Keep the capability catalog identical across arms. Let the host decide whether any candidate helps; do not require invoking a particular skill or discovering all candidates.
+
+Ask for a compact handoff record only when the task actually includes a handoff. Preserve the first accepted implementation and tests before issuing a disclosed second-stage requirement, such as explicit invalidation of a cache entry without cancelling outcomes for existing callers. If files changed between stages, disclose the change and preserve its exact diff. Judge which evidence the host rechecks, which work it retains, and whether it correctly limits file-state claims. A fingerprint match alone cannot establish the new contract.
+
+For an old/new guidance comparison, freeze both complete skill directories, use fresh CLI homes and independent Git roots, hold model settings and prompts constant, and inspect actual catalog and skill reads. Keep evaluators outside the permitted task workspace and independently check both stages. Record rejected or unavailable candidates truthfully. A single synthetic pair can demonstrate usability and exercised behavior; it cannot establish a causal quality gain, performance improvement or activation in the current desktop session.
+
+The helper's implementation tests separately cover explicitly selected files, changes and missing files, invalid records, exclusive creation, project binding and redirected paths. Integration tests verify portable asset copies, readable resource links, whole-plan conflict checks, backups and repeat installation. These checks complement behavior trials; they do not prove that a host will choose a reference in every suitable task.
+
+### Recorded operational-method trial: 2026-10-11
+
+A matched old/new skill pair used the resource-cache task, the same optional candidate catalog and a requested handoff. Each arm ran in its own fresh CLI home and Git root with the same inherited `gpt-6.1-sol`/`high` settings. Both independently passed all seven original-contract groups, then all twelve groups after a disclosed synchronous-invalidation requirement. Both retained the exact first-stage test-file bytes, used deterministic ordering probes and avoided unrelated gateway or formal-delivery workflows.
+
+The new arm read the three operational references, saved selected-file fingerprints and checked them at resume. It distinguished a disclosed comment-only change from a behavioral change, and correctly limited earlier tests to the original contract. It used Node crypto directly; this does not demonstrate adoption of the optional helper. The old arm also reached the correct continuity decision through code and context.
+
+Observed total wall time was 234.243 seconds for the old arm and 333.918 for the new arm. Cumulative input counters were 387,776 and 568,075 tokens respectively; uncached input was 49,472 and 67,339, and output was 9,860 and 14,115. Second-stage counters include the first stage. The new run consumed more time and tokens while independent acceptance was equal. Concurrent execution, one synthetic pair, explicit invocation and reused staged conversations prevent a general speed, quality or causal claim. This run establishes exercised methods and correctness for the tested contract, not superiority over default Codex or activation in an existing desktop session.
+
 Run paired trials on clean copies of representative real tasks, with the same model/settings/tools/constraints and repeated runs. Compare default Codex, adaptive integration, and explicitly configured framework workflows. Keep prompt wording and acceptance tests consistent; include both small edits and difficult investigations, missing capabilities and misleading Skills.
 
 Measure acceptance-test correctness, regression defects, scope creep, rework, elapsed time, user interruptions, and observed token usage when the platform exposes it. Treat reading and chained Skill costs as part of total execution cost. Count failed and incomplete runs, and document unavailable metrics. Do not use the number of invoked Skills or completed workflow stages as the target metric.

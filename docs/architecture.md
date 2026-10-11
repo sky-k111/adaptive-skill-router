@@ -7,10 +7,18 @@ The host agent explores code and existing checks, identifies an actual method ga
 - `scanner.ts`: bounded discovery, YAML metadata, Codex invocation restrictions, filesystem identities, source fingerprints and diagnostics.
 - `native.ts`: a short-lived JSON-RPC app-server client calling only `initialize` and `skills/list`. No model turn. The trusted executable is caller-supplied or the installed `codex` executable.
 - `router.ts`: structured evidence validation, method-gap advice, and lightweight bilingual metadata retrieval. `selectedSkills` is always empty: the CLI never claims to make the final semantic selection.
-- `integration.ts`: project-local instruction preview and writes, preserving existing text and making backups. Generated guidance reuses the distributed Skill body, copies its conditional routing reference and appends trusted CLI/project bindings, so capability reuse and third-party policy boundaries do not drift between separately maintained instructions. Reference collisions and stale previews stop before mutation. Whole-plan checks reject redirected parent directories and changed previews before initial mutation; writes are not a transactional filesystem operation. Concurrent directory replacement remains outside its guarantees.
+- `integration.ts`: project-local instruction preview and writes, preserving existing text and making backups. Generated guidance reuses the distributed Skill body and routing reference, copies the canonical investigation, capability-selection and continuity references and file-state helper, and appends trusted CLI/project bindings. Resource collisions and stale previews stop before mutation. Whole-plan checks include unchanged targets and reject redirected parent directories and changed previews before initial mutation; writes are not a transactional filesystem operation. Concurrent directory replacement remains outside its guarantees.
 - `cli.ts`: `scan`, `route`, `inspect`, and `init`; JSON output supports other tools without invoking another model.
 
 There is no cloud index, embedding service, shell hook, API classifier, global instruction rewrite, automatic dependency installation, or persistent agent process.
+
+## Operational methods and continuity evidence
+
+The standalone entry links to three conditional references. Investigation compares explanations through distinguishing checks; capability selection evaluates contribution, prerequisites and downstream costs; continuity traces the dependencies of earlier decisions and results. They guide host reasoning rather than introduce mandatory phases or automatic selection.
+
+The optional `check-evidence.mjs` helper uses Node built-ins to fingerprint explicitly selected project files. A record binds file names, resolved locations and content hashes to a canonical project root. Capture creates an exclusive local record; checks report unchanged, changed or missing files. The helper validates input, confines resolved paths to the selected root and treats record contents as data. It never executes recorded commands or asserts a test result.
+
+This is continuity support, not a security sandbox, a signed evidence store or an atomic snapshot. Unselected dependencies, environment changes and concurrent file writes remain outside its claims. Keep records local because they contain project paths. The references remain usable through host file tools when Node is unavailable.
 
 ## Discovery is layered
 

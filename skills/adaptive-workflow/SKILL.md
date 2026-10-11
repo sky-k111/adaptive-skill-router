@@ -34,6 +34,14 @@ Proceed when the evidence establishes the cause or intended behavior, the affect
 
 These are decision criteria, not sequential phases. Before adopting a method, identify the gap it addresses and consider its total cost, including required documents, tools and coordination. Continue using your own reasoning when it is sufficient.
 
+## Load an operational method for the actual gap
+
+Use these references when their trigger is observed; do not load all of them at task entry.
+
+- [Investigation](references/investigation.md): competing explanations remain, a failure depends on ordering or hidden state, or an attempted fix fails. Use it to choose an observation that separates hypotheses before changing behavior.
+- [Capability selection](references/capability-selection.md): an additional skill or tool might resolve a specific gap, but its suitability, prerequisites or downstream work are uncertain. Use it to decide what to adopt, borrow or decline.
+- [Continuity](references/continuity.md): a requirement change, handoff or resumed task makes the validity of prior decisions or checks uncertain. Use it to identify affected evidence and preserve the rest. A clear local change needs no checkpoint.
+
 ## Use optional capabilities without creating dependencies
 
 This skill must remain usable with the host's existing tools. No external skill, framework or CLI is required.

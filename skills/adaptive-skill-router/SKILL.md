@@ -17,6 +17,8 @@ Explore related code, errors and existing checks first. When the cause, scope an
 
 Choose only when you can identify the gap and explain why the method's expected value warrants its added work. Using your own reasoning or choosing no Skill is valid. Resolve whether unknowns need investigation or a user's business decision; do not automatically interrupt the user.
 
+When method selection leaves a specific operational gap, read only the relevant resource: [investigation](references/investigation.md) for competing causes or state/order failures; [capability selection](references/capability-selection.md) for uncertain candidate fit, prerequisites or invocation cost; [continuity](references/continuity.md) for uncertain evidence after a requirement change, handoff or resume. Clear changes require none of these resources.
+
 ## Reuse capabilities before discovering more
 
 Use the current session's reliable Skill catalog when sufficient. No scan or route is required merely to demonstrate this workflow. Read only a plausible candidate and its relevant resources.

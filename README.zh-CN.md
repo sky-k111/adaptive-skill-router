@@ -6,15 +6,15 @@
 
 Adaptive Workflow 是面向 Codex 的独立开发 Skill。它要求先查看相关代码、问题现象和已有检查，再决定如何推进工作：问题已经清楚时直接处理；仍有关键未知项时，采用能解决该问题的方法；执行过程中出现新证据或需求变化时，及时调整，并保留已有成果。
 
-它只包含工作指引，使用宿主已经提供的工具。安装和使用这个 Skill 不需要额外的框架、服务或命令行程序。
+它提供核心规则和按需读取的方法指引，使用宿主已经提供的工具。安装和使用不依赖其他 Skill、框架或服务。对于需要交接的长任务，还提供可选的文件状态检查工具。
 
 ## 核心能力
 
-- **根据证据选择方法。** 分清已经确认的事实、尚待检验的假设和缺失的信息，明确下一步究竟要解决什么。
+- **让调查有具体抓手。** 比较不同解释，选择能够区分假设的检查；针对身份混淆、异步执行顺序、失败恢复等边界收集证据。
 - **按实际需要安排工作。** 简单修改直接完成；根因不明、验证不足、接口需要协调或改动影响较大时，再增加必要的调查、规划、测试或审查。
 - **在对话中说明判断。** 把发现的问题、选用的方法、下一步行动和验证目标联系起来，让用户能理解工作为什么这样推进。
-- **随着情况变化调整方案。** 新证据出现后，只更新受影响的判断、改动和验收要求，继续使用仍然有效的代码、测试和调查结果。
-- **审慎使用可选能力。** 确实需要额外资源时，先检查它能否解决当前问题、是否可用、前提是否满足，再决定采用哪些部分。
+- **接续长任务，保留有效成果。** 将结论与它依赖的代码、需求和环境对应起来；发生变化时，重新检查受影响的部分，继续使用仍有效的成果。
+- **判断额外能力是否值得采用。** 比较它能解决的问题、实际可用性、运行前提和后续成本，决定完整采用、借鉴部分方法，或继续直接处理。
 - **交付有验证依据的结果。** 说明改了什么、检查证明了什么、还有哪些限制；达到验收要求后结束工作。
 
 这些能力通过指引 Codex 的判断和行动发挥作用。Skill 本身不独立运行任务，也不绕过宿主的工具权限和执行控制。
@@ -35,7 +35,7 @@ Install the standalone skill from https://github.com/sky-k111/adaptive-skill-rou
 
 也可以把仓库中的整个 `skills/adaptive-workflow` 文件夹复制到支持的 Skill 目录，例如 `~/.agents/skills/adaptive-workflow`。请保留目录结构，不要只复制正文。安装后若列表没有显示，可重启 Codex。目录与发现规则见 [OpenAI 官方文档](https://learn.chatgpt.com/docs/build-skills)。
 
-独立 Skill 无需安装 Node.js。仓库内的可选命令行工具另有运行要求。
+遵循独立 Skill 的工作指引无需安装 Node.js。可选的文件状态检查工具和仓库命令行工具需要 Node.js 22 或更新版本；也可以使用宿主已有的文件工具完成相应检查。
 
 ## 使用
 
@@ -71,6 +71,27 @@ Use $adaptive-workflow to fix this issue in the current project: [observed behav
 
 ## 执行规范
 
+### 按需要读取方法
+
+核心规则关联三份方法指引，各自在遇到相应问题时使用：
+
+- [问题调查](skills/adaptive-workflow/references/investigation.md)：当原因仍不确定时，选择能区分不同解释的检查；对异步问题，用可控的执行顺序验证关键边界。
+- [能力选择](skills/adaptive-workflow/references/capability-selection.md)：判断候选能力能带来什么、需要哪些前提、会增加多少后续工作，并说明实际采用的部分。
+- [任务续接](skills/adaptive-workflow/references/continuity.md)：任务恢复、交接或需求变化时，判断哪些旧结论需要重新验证，哪些工作可以保留。
+
+这三份指引不是必须依次完成的阶段。明确的小修改无需读取全部参考，也无需建立交接记录。
+
+需要为交接保留文件证据时，可以使用续接指引中的可选工具：
+
+```sh
+node <skill-directory>/scripts/check-evidence.mjs capture --root <project> --output <project>/local-evidence.json <relative-file> ...
+node <skill-directory>/scripts/check-evidence.mjs check --root <project> --record <project>/local-evidence.json
+```
+
+它只记录明确选定的文件，之后报告文件是否变化或缺失；已有记录不会被覆盖，项目范围外的路径会被拒绝。文件未变化不等于测试已通过，也不能证明所有相关依赖都已记录或环境没有变化。记录包含本地项目路径，应留在本地。退出状态和具体限制见任务续接指引。
+
+### 工作边界
+
 核心规则明确要求：新增流程必须有具体依据，验证要覆盖实际风险，过程和结果必须如实说明。不能编造发现、虚报调用，也不能为了套用某种方法扩大任务范围。
 
 可选资源不是必需依赖。采用前必须阅读相关指引并检查运行前提；只借鉴部分方法时，应说明实际采用的部分。不能把“发现了某项能力”当成“已经调用”，也不能把测试通过扩大为未经检查的质量结论。
@@ -81,8 +102,8 @@ Use $adaptive-workflow to fix this issue in the current project: [observed behav
 
 | 路径 | 内容 |
 | --- | --- |
-| `skills/adaptive-workflow/` | 独立 Skill 的核心规则和界面说明 |
-| `skills/adaptive-skill-router/` | 可选的项目接入指引与候选检索参考 |
+| `skills/adaptive-workflow/` | 独立 Skill 的规范原件、方法参考、可选检查工具和界面说明 |
+| `skills/adaptive-skill-router/` | 可选的项目接入指引、候选检索参考及可独立分发的方法副本 |
 | `src/` | 可选命令行工具的实现 |
 | `test/`、`fixtures/`、`examples/` | 实现检查、测试样例和证据示例 |
 | `scripts/` | 可复用的评估工具 |

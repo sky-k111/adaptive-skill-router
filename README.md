@@ -6,17 +6,17 @@
 
 Adaptive Workflow helps Codex decide how to approach software development work after inspecting the relevant code, reported behavior and existing checks. It keeps clear changes direct, introduces additional methods for demonstrated gaps, and adjusts the approach when evidence or requirements change.
 
-The skill is instruction-only. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency.
+The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. An optional file-state helper supports continuity checks.
 
 ## Core capabilities
 
 | Capability | Behavior |
 | --- | --- |
-| Evidence-based method selection | Distinguishes observed facts from hypotheses and identifies the gap a method must resolve |
+| Investigation | Compares competing explanations, chooses distinguishing observations and checks identity, ordering and failure boundaries |
 | Proportionate execution | Handles bounded changes directly; introduces planning, investigation, testing or review when justified |
 | Visible decisions | Connects concrete findings to the chosen approach, next action and verification |
-| Adaptation during execution | Updates affected decisions and acceptance criteria while preserving valid work |
-| Optional capability reuse | Checks relevance, availability and prerequisites before adopting additional resources |
+| Task continuity | Binds prior findings to their dependencies, invalidates affected evidence after changes and preserves valid work |
+| Optional capability selection | Compares contribution, availability, prerequisites and downstream cost before adopting, borrowing or declining a method |
 | Verifiable delivery | Reports actual changes, completed checks and remaining limitations, then stops at acceptance |
 
 These capabilities are guidance for the host, not an autonomous task runner. The skill does not execute tools or select another capability outside the host's normal reasoning and permission controls.
@@ -37,7 +37,7 @@ Install the standalone skill from https://github.com/sky-k111/adaptive-skill-rou
 
 Alternatively, copy the complete `skills/adaptive-workflow` directory to a supported skill location, such as `~/.agents/skills/adaptive-workflow`. Do not copy only the Markdown body. If the skill does not appear after installation, restart Codex. See [OpenAI's local skill documentation](https://learn.chatgpt.com/docs/build-skills).
 
-Node.js is not required for the standalone skill. The repository's optional CLI has separate requirements.
+Node.js is not required to follow the standalone skill. The optional file-state helper and repository CLI require Node.js 22 or newer; host file tools remain a valid alternative.
 
 ## Usage
 
@@ -78,6 +78,27 @@ This is an illustrative update, not a fixed script. Small edits need fewer updat
 
 ## Execution boundaries
 
+### Methods loaded when needed
+
+The entry links to three operational references, each with its own trigger:
+
+- [Investigation](skills/adaptive-workflow/references/investigation.md) helps choose a check that can distinguish unresolved explanations, including deterministic checks of asynchronous ordering.
+- [Capability selection](skills/adaptive-workflow/references/capability-selection.md) evaluates the useful contribution and total cost of a candidate, including partial use and unavailable prerequisites.
+- [Continuity](skills/adaptive-workflow/references/continuity.md) helps resume or revise a task by tracing which findings depend on changed files, requirements or environment.
+
+They are not required phases. A clear local change does not require loading these references or creating a checkpoint.
+
+For a handoff that needs durable file evidence, the continuity reference documents an optional helper:
+
+```sh
+node <skill-directory>/scripts/check-evidence.mjs capture --root <project> --output <project>/local-evidence.json <relative-file> ...
+node <skill-directory>/scripts/check-evidence.mjs check --root <project> --record <project>/local-evidence.json
+```
+
+It records explicitly selected files and reports unchanged, changed or missing state. It refuses an existing output record and paths outside the selected project. Unchanged files do not prove that tests passed, that all dependencies were selected or that the environment is unchanged. Keep records local: they contain project paths. See the continuity reference for exit codes and limitations.
+
+### Scope and authority
+
 The specification requires evidence before escalation, checks proportionate to the consequences, truthful reporting and reuse of valid work. It prohibits invented findings, unsupported invocation claims and scope expansion merely to accommodate a method.
 
 Optional resources do not become mandatory dependencies. Their instructions must be inspected before adoption, and their prerequisites must be available. Using part of a method must be reported as partial use.
@@ -88,8 +109,8 @@ Method selection never grants additional authority. Required project checks and 
 
 | Path | Purpose |
 | --- | --- |
-| `skills/adaptive-workflow/` | Standalone skill instructions and interface metadata |
-| `skills/adaptive-skill-router/` | Optional project guidance for capability discovery and candidate retrieval |
+| `skills/adaptive-workflow/` | Canonical instructions, operational references, optional helper and interface metadata |
+| `skills/adaptive-skill-router/` | Optional project guidance, candidate retrieval reference and portable copies of the methods |
 | `src/` | Optional CLI implementation |
 | `test/`, `fixtures/`, `examples/` | Implementation checks, test fixtures and evidence examples |
 | `scripts/` | Reproducible evaluation tools |
