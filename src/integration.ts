@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir, realpath, lstat } from 'node:fs/promises';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, relative, isAbsolute, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
@@ -74,6 +74,8 @@ export async function writeIntegration(cwd: string, plans: IntegrationPlan[]): P
   const changed = plans.filter(p => p.changed);
   // Check the complete plan before making its first change.
   for (const plan of plans) {
+    const distance = relative(root, resolve(plan.path));
+    if (!distance || distance === '..' || distance.startsWith(`..${sep}`) || isAbsolute(distance)) throw new Error('Integration target is outside the project.');
     // Verify all existing parent links stay in the selected project before writing.
     let parent = dirname(plan.path);
     while (parent !== root) {

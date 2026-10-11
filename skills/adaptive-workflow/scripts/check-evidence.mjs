@@ -37,8 +37,24 @@ async function boundFile(root, filename) {
     component = path.join(component, part);
     if ((await lstat(component)).isSymbolicLink()) {
       const target = path.resolve(path.dirname(component), await readlink(component));
-      if (target !== root && !inside(root, target)) throw new Error(`Selected link points outside the project root: ${filename}`);
-      const actual = await realpath(component);
+      let actual;
+      try { actual = await realpath(component); }
+      catch (error) {
+        // Canonicalize the nearest existing ancestor of a dangling target.
+        // System aliases (such as /var -> /private/var) are not project escapes.
+        let ancestor = target;
+        const suffix = [];
+        while (true) {
+          try { actual = path.join(await realpath(ancestor), ...suffix); break; }
+          catch (ancestorError) {
+            if (ancestorError.code !== 'ENOENT' || path.dirname(ancestor) === ancestor) throw ancestorError;
+            suffix.unshift(path.basename(ancestor));
+            ancestor = path.dirname(ancestor);
+          }
+        }
+        if (actual !== root && !inside(root, actual)) throw new Error(`Selected link points outside the project root: ${filename}`);
+        throw error;
+      }
       if (actual !== root && !inside(root, actual)) throw new Error(`Selected link resolves outside the project root: ${filename}`);
     }
   }
@@ -57,9 +73,8 @@ async function digest(filename) {
 async function boundRecordPath(root, input, writing) {
   if (typeof input !== 'string' || !input) throw new Error(writing ? '--output is required.' : '--record is required.');
   const filename = path.resolve(root, input);
-  if (!inside(root, filename)) throw new Error('The record path must be inside the project root.');
   const parent = await realpath(path.dirname(filename));
-  if (parent !== root && !inside(root, parent)) throw new Error('The record parent resolves outside the project root.');
+  if (parent !== root && !inside(root, parent)) throw new Error('The record path must be inside the project root; its parent resolves outside the project root.');
   if (!writing) {
     const resolved = await realpath(filename);
     if (!inside(root, resolved)) throw new Error('The record resolves outside the project root.');

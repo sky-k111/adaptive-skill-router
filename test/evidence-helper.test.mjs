@@ -105,6 +105,22 @@ test('same-content directory redirection inside the root is changed, not unchang
   assert.deepEqual((await check({ root, record: 'state.json' })).files, [{ path: 'src/file.txt', status: 'changed' }]);
 });
 
+test('canonical project aliases work for selected links and absolute record paths', async t => {
+  const { base, root } = await project(t);
+  const alias = join(base, 'project-alias');
+  await symlink(root, alias, 'junction');
+  await symlink(join(alias, 'src'), join(root, 'linked'), 'junction');
+  const record = join(alias, 'state.json');
+  await capture({ root: alias, output: record, files: ['linked/file.txt'] });
+  assert.deepEqual((await check({ root, record })).files, [{ path: 'linked/file.txt', status: 'unchanged' }]);
+  await rm(join(root, 'src/file.txt'));
+  assert.deepEqual((await check({ root: alias, record })).files, [{ path: 'linked/file.txt', status: 'missing' }]);
+  await rm(join(root, 'linked'));
+  // A dangling internal target through the alias is missing, rather than an escape.
+  await symlink(join(alias, 'absent'), join(root, 'linked'), 'junction');
+  assert.deepEqual((await check({ root, record })).files, [{ path: 'linked/file.txt', status: 'missing' }]);
+});
+
 test('a record directory redirected outside the root is rejected before reading the record', async t => {
   const { base, root } = await project(t);
   await mkdir(join(root, 'records'));
