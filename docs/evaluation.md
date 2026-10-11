@@ -68,6 +68,8 @@ A [repeated sixteen-conversation trial](benchmark-2026-10-11.md) ([Chinese repor
 
 A [six-conversation real-project trial](real-project-2026-10-11.md) ([Chinese report](real-project-2026-10-11.zh-CN.md)) repaired archive validation and found post-hoc compatibility regressions. It records no stable superiority and a derived-cache preparation flaw that limits cost attribution. A targeted method correction was made only after the frozen comparisons completed.
 
+A [frozen-version forward comparison](heldout-2026-10-11.md) ([Chinese report](heldout-2026-10-11.zh-CN.md)) used two actual source defects not involved in Skill design, with three configurations and two repetitions each. All twelve runs passed their fixed acceptance. Neither registered quality nor repeated input-reduction criterion was met. Copies and initial Git indexes were prepared before baseline tests, while shared dependencies and server caching remained uncontrolled. Tasks and detailed acceptance contracts were researcher-authored module repairs, not blind production sampling or whole-project evaluation.
+
 ### Operational references and handoff
 
 Evaluate the investigation, capability-selection and continuity references through an independent task, rather than assertions that their prose contains particular phrases. One useful design uses the asynchronous resource-cache contract above and includes plausible optional capabilities with different prerequisites and costs. Keep the capability catalog identical across arms. Let the host decide whether any candidate helps; do not require invoking a particular skill or discovering all candidates.

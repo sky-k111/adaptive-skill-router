@@ -8,6 +8,8 @@ Adaptive Workflow helps Codex decide how to approach software development work a
 
 The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. An optional file-state helper supports continuity checks.
 
+Behavioral effectiveness remains experimental. Current comparative evaluations do not establish reliable superiority over default Codex or general token savings. Use the published evidence and its limitations when deciding whether this guidance fits your work.
+
 ## Core capabilities
 
 | Capability | Behavior |
@@ -134,6 +136,8 @@ These checks require Node.js 22 or newer. Passing them establishes the tested be
 A [repeated behavior trial](docs/benchmark-2026-10-11.md) found less input usage on a clear repair with a shared process-skill library, while independent acceptance stayed equal. It found no repeated advantage over bare Codex. The report includes all outcomes and limits; it does not establish automatic activation or general savings.
 
 A [real-project archive repair](docs/real-project-2026-10-11.md) passed the frozen checks across all configurations but exposed compatibility regressions during additional review. It did not establish a stable quality or cost advantage. The report records the preparation flaw, all outcomes and the targeted guidance correction.
+
+A [frozen-version comparison on two new source defects](docs/heldout-2026-10-11.md) completed twelve fresh conversations with identical acceptance across all three configurations. Neither its registered quality signal nor repeated input-reduction threshold was reached. The report preserves every result and distinguishes clean source preparation from uncontrolled shared dependencies and caching.
 
 ## Contributing and license
 
