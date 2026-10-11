@@ -124,6 +124,8 @@ npm run check
 
 这组检查需要 Node.js 22 或更新版本。检查通过只能证明相应测试覆盖的行为，不能据此宣称优于默认 Agent，或节省了 Token。行为评估方法及限制见 [评估说明](docs/evaluation.md)。本地日志、私人配置和生成的接入文件不随源码发布。
 
+[重复行为对照](docs/benchmark-2026-10-11.zh-CN.md)记录了一个限定的收益场景：同一流程技能库下，处理要求明确的小修改时，输入 Token 减少，独立验收结果保持一致。直接与普通 Codex 比较时，没有取得重复优势。报告保留了全部结果及限制，不能据此宣称安装后自动生效或普遍节省 Token。
+
 ## 贡献与许可
 
 贡献前请阅读 [贡献指南](CONTRIBUTING.md)。发现问题时，可在 [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues) 提供复现步骤、预期行为和实际结果。

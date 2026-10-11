@@ -64,6 +64,8 @@ Explicitly loading updated guidance is a positive control for readability and ad
 
 ## Comparative trials
 
+A [repeated sixteen-conversation trial](benchmark-2026-10-11.md) ([Chinese report](benchmark-2026-10-11.zh-CN.md)) records a bounded benefit with a shared process-skill library, repeated forced-workflow review waits and negative bare-Codex comparisons. The positive result concerns explicit use on a clear repair: it is not an installation, latency or general-quality guarantee.
+
 ### Operational references and handoff
 
 Evaluate the investigation, capability-selection and continuity references through an independent task, rather than assertions that their prose contains particular phrases. One useful design uses the asynchronous resource-cache contract above and includes plausible optional capabilities with different prerequisites and costs. Keep the capability catalog identical across arms. Let the host decide whether any candidate helps; do not require invoking a particular skill or discovering all candidates.

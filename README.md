@@ -131,6 +131,8 @@ npm run check
 
 These checks require Node.js 22 or newer. Passing them establishes the tested behavior, not superior agent quality or reduced token usage. Behavioral evaluation methods and limitations are documented in [Evaluation](docs/evaluation.md). Local logs, private configurations and generated installations are excluded from published source.
 
+A [repeated behavior trial](docs/benchmark-2026-10-11.md) found less input usage on a clear repair with a shared process-skill library, while independent acceptance stayed equal. It found no repeated advantage over bare Codex. The report includes all outcomes and limits; it does not establish automatic activation or general savings.
+
 ## Contributing and license
 
 See [Contributing](CONTRIBUTING.md) for development and reporting requirements. Report reproducible problems through [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues).
