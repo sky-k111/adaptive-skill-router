@@ -81,8 +81,14 @@ async function boundRecordPath(root, input, writing) {
     if (!(await stat(resolved)).isFile()) throw new Error('The record must be a regular file.');
     return resolved;
   }
-  // Use the checked parent and exclusive creation; an existing file or symlink fails.
-  return path.join(parent, path.basename(filename));
+  // Windows exclusive creation can follow a dangling file symlink. Check the
+  // entry itself before writing; exclusive creation also rejects ordinary races.
+  const destination = path.join(parent, path.basename(filename));
+  try {
+    await lstat(destination);
+    throw Object.assign(new Error('The output record already exists.'), { code: 'EEXIST' });
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  return destination;
 }
 
 export async function capture({ root, output, files }) {

@@ -94,6 +94,7 @@ test('file links outside the root, including dangling links, are rejected', asyn
   await rm(outside);
   await assert.rejects(capture({ root, output: 'state.json', files: ['linked.txt'] }), /outside/);
   await assert.rejects(capture({ root, output: 'linked.txt', files: ['src/file.txt'] }), { code: 'EEXIST' });
+  await assert.rejects(readFile(outside), { code: 'ENOENT' });
 });
 
 test('same-content directory redirection inside the root is changed, not unchanged', async t => {
