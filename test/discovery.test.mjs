@@ -1,0 +1,140 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { scanSkills, discoverLocalSkills, searchRemoteSkills } from '../dist/index.js';
+import { sandbox, skill, put, options } from './helpers.mjs';
+
+const row = (source = 'example/skills', slug = 'browser-tests', extra = {}) => ({
+  id: `${source}/${slug}`, source, name: slug, installs: 120, ...extra
+});
+const response = skills => Response.json({ skills });
+
+test('plain capability phrases retrieve hyphenated names ahead of a generic overlap', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'frontend', 'frontend-design', 'Create intentional interfaces for the web');
+  await skill(root, 'generic', 'guidelines', 'Design guidance');
+  const matches = discoverLocalSkills('frontend design', await scanSkills(options(root)));
+  assert.equal(matches[0].name, 'frontend-design');
+  assert.deepEqual(matches[0].matchedTerms, ['frontend', 'design']);
+  assert.equal(matches[1].name, 'guidelines');
+});
+
+test('local discovery separates retrievability from invocation eligibility and preserves collisions', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'one', 'browser-tests', 'Playwright browser testing');
+  await skill(root, 'two', 'browser-tests', 'Playwright browser testing');
+  const disabled = await skill(root, 'disabled', 'disabled-browser', 'Playwright browser testing');
+  await put(root, 'home/.codex/config.toml', `[[skills.config]]\npath = ${JSON.stringify(disabled.replaceAll('\\', '/'))}\nenabled = false\n`);
+  await skill(root, 'manual', 'manual-browser', 'Playwright browser testing');
+  await put(root, 'manual/agents/openai.yaml', 'policy:\n  allow_implicit_invocation: false\n');
+  await skill(root, 'other', 'database', 'SQL performance');
+  const catalog = await scanSkills(options(root));
+  const matches = discoverLocalSkills('Playwright browser', catalog);
+  assert.equal(matches.length, 4);
+  assert.deepEqual(matches.map(s => s.eligibility), ['candidate', 'candidate', 'explicit-only', 'disabled']);
+  assert.notEqual(matches[0].id, matches[1].id);
+  assert.ok(matches.slice(0, 2).every(s => s.advisories.includes('name-collision-use-path')));
+  assert.equal(discoverLocalSkills('不存在的能力', catalog).length, 0);
+  assert.throws(() => discoverLocalSkills('browser', catalog, 0));
+});
+
+test('remote search encodes only capability keywords and returns source-bound, unverified metadata', async () => {
+  let calls = 0;
+  const result = await searchRemoteSkills({ query: '  browser  testing & $literal ', owner: 'Example', limit: 2 }, async (url, init) => {
+    calls++;
+    assert.equal(url.origin, 'https://skills.sh');
+    assert.equal(url.searchParams.get('q'), 'browser testing & $literal');
+    assert.equal(url.searchParams.get('owner'), 'example');
+    assert.equal(url.searchParams.get('limit'), '2');
+    assert.deepEqual(init.headers, { Accept: 'application/json' });
+    assert.equal(init.redirect, 'manual');
+    return response([row(), row('example/other', 'browser-tests')]);
+  });
+  assert.equal(calls, 1);
+  assert.equal(result.candidates.length, 2);
+  assert.notEqual(result.candidates[0].id, result.candidates[1].id);
+  assert.equal(result.candidates[0].repositoryUrl, 'https://github.com/example/skills');
+  assert.equal(result.candidates[0].url, 'https://skills.sh/example/skills/browser-tests');
+  assert.equal(result.candidates[0].availability, 'remote-unverified');
+  assert.deepEqual(result.selectedSkills, []);
+  assert.ok(!('installCommand' in result.candidates[0]));
+});
+
+test('malicious, inconsistent, duplicate and out-of-owner rows do not become remote candidates', async () => {
+  const result = await searchRemoteSkills({ query: 'browser', owner: 'example', limit: 2 }, async () => response([
+    null, row('example/skills', 'browser-tests', { id: 'attacker/other/browser-tests' }),
+    row('example/skills', '../escape'), row('example/skills', 'terminal', { name: '\u001b[2J' }),
+    row('attacker/other'), row(), row(), row('example/second', 'another', { installs: -10 }),
+    row('example/third', 'third')
+  ]));
+  assert.deepEqual(result.candidates.map(s => s.source), ['example/skills', 'example/second']);
+  assert.equal(result.candidates[1].installs, null);
+  assert.equal(result.diagnostics[0].code, 'registry-entries-excluded');
+});
+
+test('invalid inputs are rejected before any transport request', async () => {
+  let calls = 0;
+  const transport = async () => { calls++; return response([]); };
+  for (const input of [
+    { query: '' }, { query: 'a' }, { query: 'x'.repeat(161) }, { query: 'browser\nprivate' },
+    { query: 'browser', owner: '../escape' }, { query: 'browser', owner: '' },
+    { query: 'browser', limit: 0 }, { query: 'browser', limit: 21 },
+    { query: 'browser', timeoutMs: 99 }, { query: 'browser', timeoutMs: Infinity }
+  ]) await assert.rejects(searchRemoteSkills(input, transport));
+  assert.equal(calls, 0);
+});
+
+test('service errors, schema drift and invalid bodies remain failures rather than empty results', async () => {
+  for (const [factory, expected] of [
+    [() => new Response('PRIVATE_RESPONSE', { status: 429 }), /HTTP 429/],
+    [() => Response.json({ data: [] }), /schema changed/],
+    [() => new Response('<html>PRIVATE_RESPONSE</html>'), /invalid UTF-8 or JSON/],
+    [() => new Response(new Uint8Array([255, 254])), /invalid UTF-8 or JSON/]
+  ]) {
+    let calls = 0;
+    await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => { calls++; return factory(); }), error => {
+      assert.match(error.message, expected);
+      assert.doesNotMatch(error.message, /PRIVATE_RESPONSE/);
+      return true;
+    });
+    assert.equal(calls, 1);
+  }
+  const empty = await searchRemoteSkills({ query: 'browser' }, async () => response([]));
+  assert.deepEqual(empty.candidates, []);
+  assert.deepEqual(empty.diagnostics, []);
+});
+
+test('redirects are bounded and cannot send search keywords to another origin', async () => {
+  let calls = 0;
+  const result = await searchRemoteSkills({ query: 'browser' }, async url => {
+    calls++;
+    return url.hostname === 'skills.sh' ? new Response(null, { status: 307, headers: { location: `https://www.skills.sh${url.pathname}${url.search}` } }) : response([row()]);
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.candidates.length, 1);
+  for (const location of ['http://skills.sh/api/search', 'https://attacker.test/search', 'https://skills.sh:8443/api/search', 'https://user@skills.sh/search']) {
+    calls = 0;
+    await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => { calls++; return new Response(null, { status: 302, headers: { location } }); }), /allowed HTTPS origin/);
+    assert.equal(calls, 1);
+  }
+  calls = 0;
+  await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => { calls++; return new Response(null, { status: 302, headers: { location: '/loop' } }); }), /redirect could not be resolved/);
+  assert.equal(calls, 3);
+});
+
+test('response sizes are bounded even without a content-length header', async () => {
+  for (const headers of [{}, { 'content-length': String(512 * 1024 + 1) }]) {
+    await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => new Response('x'.repeat(512 * 1024 + 1), { headers })), /size limit/);
+  }
+});
+
+test('network errors and timeouts are bounded, observable and never retried automatically', async () => {
+  let calls = 0;
+  await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => { calls++; throw new TypeError('PRIVATE_NETWORK_DETAILS'); }), /network request failed/);
+  assert.equal(calls, 1);
+  await assert.rejects(searchRemoteSkills({ query: 'browser', timeoutMs: 100 }, async (_url, { signal }) => new Promise((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+  })), /timed out/);
+  await assert.rejects(searchRemoteSkills({ query: 'browser', timeoutMs: 100 }, async (_url, { signal }) => new Response(new ReadableStream({ start(controller) {
+    signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+  } }))), /timed out/);
+});

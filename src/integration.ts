@@ -37,7 +37,14 @@ export async function planIntegration(cwd: string): Promise<IntegrationPlan[]> {
     source: await readFile(new URL(`../skills/adaptive-workflow/references/${name}.md`, import.meta.url), 'utf8'),
     marker: `<!-- adaptive-workflow:reference ${name} -->`
   })));
-  const evidenceScript = await readFile(new URL('../skills/adaptive-workflow/scripts/check-evidence.mjs', import.meta.url), 'utf8');
+  const scriptResources = await Promise.all([
+    ['check-evidence.mjs', '// Adaptive Workflow evidence record.'],
+    ['search-skills.mjs', '// Adaptive Workflow remote skill discovery.'],
+    ['search-skills.d.mts', '// Adaptive Workflow remote discovery types.']
+  ].map(async ([name, marker]) => ({
+    path: join(root, '.agents', 'skills', 'adaptive-skill-router', 'scripts', name!),
+    source: await readFile(new URL(`../skills/adaptive-workflow/scripts/${name}`, import.meta.url), 'utf8'), marker: marker!
+  })));
   const skill = `${source.trimEnd()}\n\n## Project CLI binding\n\nFor optional CLI calls, use \`${command}\` with \`--cwd ${quote(root)}\` (the project root, even from a child). Append the scan/route/inspect arguments from [CLI reference](references/routing.md). These paths are local to this installation; reintegrate after moving it. Pass arguments with the host's shell quoting rules. If unavailable, apply the principles directly and report the limitation.\n`;
   const block = `${START}\n## Adaptive development\nExplore relevant code and existing checks before choosing a workflow. Handle clear local edits directly and verify proportionately. When exploration exposes a method or knowledge gap, use the project skill at \`.agents/skills/adaptive-skill-router/SKILL.md\` to choose useful methods. Choose skills only for concrete expected value; user goals and project constraints govern third-party workflow rules. At meaningful decisions, briefly connect observed findings to the chosen method or Skill, next action and verification. Explain changes and reuse still-valid evidence; report actual results without repetitive workflow announcements or extra approval gates.\n${END}`;
   const targets = [
@@ -54,10 +61,10 @@ export async function planIntegration(cwd: string): Promise<IntegrationPlan[]> {
       if (old && !old.startsWith(resource.marker)) throw new Error('An unrelated reference already exists at the integration target.');
       return resource.source;
     } })),
-    { path: join(root, '.agents', 'skills', 'adaptive-skill-router', 'scripts', 'check-evidence.mjs'), make: (old: string) => {
-      if (old && !old.replace(/^#![^\r\n]*\r?\n/, '').startsWith('// Adaptive Workflow evidence record.')) throw new Error('An unrelated script already exists at the integration target.');
-      return evidenceScript;
-    } }
+    ...scriptResources.map(resource => ({ path: resource.path, make: (old: string) => {
+      if (old && !old.replace(/^#![^\r\n]*\r?\n/, '').startsWith(resource.marker)) throw new Error('An unrelated script already exists at the integration target.');
+      return resource.source;
+    } }))
   ];
   const plans: IntegrationPlan[] = [];
   for (const target of targets) {

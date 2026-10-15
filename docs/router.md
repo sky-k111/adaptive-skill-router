@@ -25,6 +25,8 @@ Run from this checkout or use an absolute CLI path. Generated guidance binds tha
 | --- | --- |
 | `scan` | Inventory bounded disk roots, metadata, identities and invocation restrictions |
 | `scan --native` | Read the catalog of a fresh local Codex app-server process |
+| `discover "capability keywords"` | Search local metadata, retaining exact identities and invocation constraints |
+| `discover "capability keywords" --online` | Also retrieve unverified GitHub-source candidates from skills.sh |
 | `route --task-file task.txt --evidence evidence.json` | Suggest a next approach and relevant capability candidates |
 | `inspect <id>` | Read a discovered candidate and check its source fingerprint |
 | `init` / `init --write` | Preview / apply project-local integration |
@@ -33,11 +35,27 @@ Run from this checkout or use an absolute CLI path. Generated guidance binds tha
 node dist/cli.js scan --cwd /path/to/project --json
 node dist/cli.js scan --root /path/to/library --json
 node dist/cli.js scan --native --codex-bin /trusted/path/to/codex --json
+node dist/cli.js discover "browser interaction testing" --cwd /path/to/project --json
+node dist/cli.js discover "browser interaction testing" --online --owner example --cwd /path/to/project --json
 node dist/cli.js route --task-file task.txt --evidence evidence.json --cwd /path/to/project --json
 node dist/cli.js inspect <exact-id> --json
 ```
 
 Native and custom-root discovery cannot be combined. Native failures are reported rather than replaced silently with disk results. A route never invokes a skill, starts a model or agent, installs a dependency, or authorizes an external action.
+
+## Local and external capability discovery
+
+`discover` is an inventory query, separate from evidence-based method routing. It returns local name/description matches even when heuristic method classification would not shortlist them. Candidate, explicit-only, unverified-plugin and disabled states remain distinct, with eligible candidates first. A `candidate` still requires source inspection and actual host availability. English token and Chinese bigram matching is lexical; the host may need an equivalent query in the description's language.
+
+Without `--online`, discovery makes no registry request. With `--online`, only the explicit capability query (2–160 characters), optional GitHub owner and result limit (1–20, default 5) are sent to skills.sh. Do not pass private task contents as the query. The request reads no project files, forwards no credentials and makes no automatic retry. The default timeout is eight seconds, the response limit is 512 KiB, and redirects are restricted to the registry's HTTPS origins. No repository is cloned and no package manager is started.
+
+Remote metadata has separate identities of the form `skills.sh:owner/repository/skill`, source and registry links, reported installs and `remote-unverified` availability. Currently only GitHub repository sources are accepted. Duplicate names across different sources remain separate. Matching local names do not establish remote installation provenance. Malformed, duplicate or out-of-owner records are excluded with a count diagnostic. Missing or invalid install counts become `null`, never quality scores.
+
+Output keeps `local`, `remote`, catalog diagnostics and an empty `selectedSkills` separate. A remote HTTP/network/timeout/schema failure leaves local results available with `remote.status: "failed"` and exit code 2. A successful empty search has `remote.status: "ok"`; omitted networking has `"not-requested"`, both exit 0. Invalid requests and local discovery failures exit 1. JSON partial results remain on stdout; callers must inspect status as well as the process exit code.
+
+The adapter uses the public search endpoint used by the registry's [own CLI](https://github.com/vercel-labs/skills/blob/main/src/find.ts), rather than the separately authenticated versioned API. This external contract may change; do not silently reinterpret schema drift as no matches. Deterministic tests use controlled HTTP responses and do not establish live service availability.
+
+Review the exact source `SKILL.md`, relevant dependencies, license, host compatibility and workflow obligations before selection. Installation requires applicable user authorization; retrieval never grants it. [Capability selection](../skills/adaptive-workflow/references/capability-selection.md) describes how the host can adopt available skills and report remote installation needs. The standalone helper in that skill supports the same remote search without building this CLI.
 
 ## Discovery boundaries
 

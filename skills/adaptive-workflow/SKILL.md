@@ -1,6 +1,6 @@
 ---
 name: adaptive-workflow
-description: Select or revise a development method when focused exploration leaves an unresolved cause, requirement, coordination, verification, or review gap. Explain material decisions and verify the requested outcome. Clear, bounded edits normally proceed directly.
+description: Select or revise a development method when focused exploration leaves an unresolved cause, requirement, coordination, verification, or review gap. Discover and assess additional skills for a concrete capability gap. Clear, bounded edits normally proceed directly.
 ---
 
 # Adaptive Workflow
@@ -39,7 +39,7 @@ These are decision criteria, not sequential phases. Before adopting a method, id
 Use these references when their trigger is observed; do not load all of them at task entry.
 
 - [Investigation](references/investigation.md): competing explanations remain, a failure depends on ordering or hidden state, an attempted fix fails, or a new restriction leaves required compatibility unverified. Use it to separate hypotheses and check the behavior a proposed fix must preserve.
-- [Capability selection](references/capability-selection.md): an additional skill or tool might resolve a specific gap, but its suitability, prerequisites or downstream work are uncertain. Use it to decide what to adopt, borrow or decline.
+- [Capability selection](references/capability-selection.md): an additional skill or tool might resolve a specific gap, but its suitability, prerequisites or downstream work are uncertain. Follow its local-first discovery and source review method; an optional registry search helper can find uninstalled candidates.
 - [Continuity](references/continuity.md): a requirement change, handoff or resumed task makes the validity of prior decisions or checks uncertain. Use it to identify affected evidence and preserve the rest. A clear local change needs no checkpoint.
 
 ## Use optional capabilities without creating dependencies

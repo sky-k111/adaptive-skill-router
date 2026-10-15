@@ -8,6 +8,14 @@ Implementation tests cover malformed metadata, aliases and Unicode, duplicate na
 
 The ten policy scenarios include a clear bug, a large mechanical edit, an unknown root cause, missing regression coverage, interfaces spanning modules, a high-consequence one-line change, a business unknown, unknown scope, and de-escalation after resolution. Fixtures offer narrow debugging/testing/planning methods and a deliberately overbroad workflow. A broad trigger alone never creates a method gap or final selection; matched broad candidates retain an advisory for the host.
 
+## Discovery implementation checks: 2026-10-15
+
+The discovery tests cover source-bound remote identities, duplicate and malformed entries, owner restrictions, input validation before I/O, response-size limits, restricted redirects, network errors, request/body timeouts and schema changes. Controlled HTTP responses make these tests independent of registry availability. CLI checks cover local-only defaults, successful online metadata, explicit-only/disabled local states, standalone helper parity, no installation writes and retained local results with exit code 2 after registry failure. Integration checks cover both distributed copies, relative links, backups, conflict detection and idempotent installation of the new resources.
+
+These are implementation checks, not comparative agent-quality evidence. The host still chooses semantically after reviewing exact source instructions and prerequisites; a shortlist or lexical score is not a final selection. A live request from this environment failed during the TLS connection, so this development run does not establish current end-to-end registry availability. No third-party skill was installed for these checks and no new token-saving or superiority claim follows from them.
+
+Both skill metadata blocks were checked with the repository's YAML parser and 52 relevant relative links resolved. The skill-creator Python validator could not start because PyYAML was unavailable; it was not counted as passed. Package dry-run inspection included both self-contained discovery helpers and their type declarations. The updated installed copy was checked against the source, with the prior six-file version backed up privately.
+
 ## Independent behavior smoke test
 
 Build, then run `node scripts/create-behavior-workspace.mjs /fresh/path`. Existing directories are rejected. The sandbox has project integration, fixture Skills and three cases:

@@ -6,7 +6,7 @@
 
 Adaptive Workflow helps Codex decide how to approach software development work after inspecting the relevant code, reported behavior and existing checks. It keeps clear changes direct, introduces additional methods for demonstrated gaps, and adjusts the approach when evidence or requirements change.
 
-The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. An optional file-state helper supports continuity checks.
+The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. Optional helpers support file-state checks and external skill discovery.
 
 Behavioral effectiveness remains experimental. Current comparative evaluations do not establish reliable superiority over default Codex or general token savings. Use the published evidence and its limitations when deciding whether this guidance fits your work.
 
@@ -18,7 +18,7 @@ Behavioral effectiveness remains experimental. Current comparative evaluations d
 | Proportionate execution | Handles bounded changes directly; introduces planning, investigation, testing or review when justified |
 | Visible decisions | Connects concrete findings to the chosen approach, next action and verification |
 | Task continuity | Binds prior findings to their dependencies, invalidates affected evidence after changes and preserves valid work |
-| Optional capability selection | Compares contribution, availability, prerequisites and downstream cost before adopting, borrowing or declining a method |
+| Capability discovery and selection | Searches existing capabilities first, can discover uninstalled candidates, and reviews exact source instructions, prerequisites and downstream cost before adoption |
 | Verifiable delivery | Reports actual changes, completed checks and remaining limitations, then stops at acceptance |
 
 These capabilities are guidance for the host, not an autonomous task runner. The skill does not execute tools or select another capability outside the host's normal reasoning and permission controls.
@@ -39,7 +39,7 @@ Install the standalone skill from https://github.com/sky-k111/adaptive-skill-rou
 
 Alternatively, copy the complete `skills/adaptive-workflow` directory to a supported skill location, such as `~/.agents/skills/adaptive-workflow`. Do not copy only the Markdown body. If the skill does not appear after installation, restart Codex. See [OpenAI's local skill documentation](https://learn.chatgpt.com/docs/build-skills).
 
-Node.js is not required to follow the standalone skill. The optional file-state helper and repository CLI require Node.js 22 or newer; host file tools remain a valid alternative.
+Node.js is not required to follow the standalone skill. Optional helpers and the repository CLI require Node.js 22 or newer; host file and browsing tools remain valid alternatives.
 
 ## Usage
 
@@ -62,6 +62,24 @@ Use $adaptive-workflow to fix this issue in the current project: [observed behav
 Read the progress updates alongside the actual changes. You should be able to see which evidence supports the approach, why any additional method is needed, and what the checks establish. A clear fix may proceed directly. When the guidance is used, the first substantive update identifies Adaptive Workflow and the decision it supports.
 
 If the requirement changes during execution, state the new behavior explicitly. The next update should explain the affected decision and which completed work remains useful. This is a practical way to inspect adaptation; it is not a benchmark against default Codex.
+
+### Find a capability the project is missing
+
+Ask for the missing contribution, for example:
+
+```text
+Use $adaptive-workflow to find a suitable skill for the browser interaction checks this project lacks. Check existing capabilities first, review source instructions and prerequisites, and explain the choice before adoption.
+```
+
+The host first checks available local skills. When they are insufficient, it can search external sources using its browsing tools or the bundled helper:
+
+```sh
+node <skill-directory>/scripts/search-skills.mjs --query "browser interaction testing" --limit 5
+```
+
+The optional helper sends only the explicit query and optional owner/limit to skills.sh; use non-sensitive capability keywords. It does not read the project, install packages or execute discovered skills. GitHub-backed results include exact source identities and links, and remain unverified until the host reviews their actual instructions, prerequisites and compatibility. Popularity is not a quality score. Network failures, schema changes and successful empty results are distinct. See [capability selection](skills/adaptive-workflow/references/capability-selection.md) for the selection and authorization boundaries.
+
+For combined local and optional online discovery, the repository CLI adds `discover "keywords"` and `discover "keywords" --online`; see [router commands](docs/router.md). Discovery does not require a separately installed discovery skill or package manager. The standalone helper is optional and uses the external search endpoint used by the registry's own CLI; continued availability is not guaranteed.
 
 ## What appears in the conversation
 

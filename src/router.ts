@@ -1,9 +1,9 @@
 import type { Candidate, Catalog, Decision, Evidence, Host, Method, Skill } from './types.js';
+import { metadataTokens as tokens } from './retrieval.js';
 
 const LIMITATION = 'Evidence-based workflow advice, not an execution or authorization engine. Retrieval scores rank metadata matches, not quality or certainty. Codex makes the final semantic choice after inspecting a candidate.';
 const STRINGS = ['findings', 'unknowns'] as const;
 const FLAGS = ['rootCauseKnown', 'requirementsClear', 'verificationReady', 'regressionRisk', 'stalled', 'destructive', 'production', 'needsDomainKnowledge', 'coordinationNeeded'] as const;
-const STOP_WORDS = new Set('a an and are as at be been before by can do for from has have if in is it its of on or our that the their then these this to use used using was we when where which with you your'.split(' '));
 
 export function validateEvidence(value: unknown, task: string): Evidence {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Evidence must be an object.');
@@ -20,16 +20,6 @@ export function validateEvidence(value: unknown, task: string): Evidence {
   }
   if (data.explored && (data.findings as string[]).length === 0) throw new Error('Explored evidence must contain at least one finding.');
   return data as unknown as Evidence;
-}
-
-function tokens(text: string): Set<string> {
-  const normalized = text.toLowerCase();
-  const out = new Set((normalized.match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? []).filter(word => !STOP_WORDS.has(word)));
-  for (const group of normalized.match(/[\p{Script=Han}]+/gu) ?? []) {
-    if (group.length === 1) out.add(group);
-    for (let i = 0; i < group.length - 1; i++) out.add(group.slice(i, i + 2));
-  }
-  return out;
 }
 
 function shortlist(task: string, catalog: Catalog, gaps: Method[], limit: number, requested: string[]): Candidate[] {

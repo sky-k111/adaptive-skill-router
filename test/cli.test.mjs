@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { readFile, readdir } from 'node:fs/promises';
 import { sandbox, put, skill, evidence } from './helpers.mjs';
@@ -11,6 +12,65 @@ const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 async function invoke(root, args) {
   return run(process.execPath, [cli, ...args, '--cwd', root], { cwd: root, windowsHide: true });
 }
+
+test('CLI discovery is local by default and retains exact candidate identities without selecting', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'library/browser', 'browser-tests', 'Playwright browser testing');
+  const { stdout } = await invoke(root, ['discover', 'Playwright', '--no-defaults', '--root', join(root, 'library'), '--json']);
+  const result = JSON.parse(stdout);
+  assert.equal(result.local.length, 1);
+  assert.equal(result.local[0].eligibility, 'candidate');
+  assert.equal(result.remote.status, 'not-requested');
+  assert.deepEqual(result.selectedSkills, []);
+  assert.deepEqual((await readdir(root)).sort(), ['library']);
+});
+
+test('CLI validates discovery scope and query before native discovery or network access', async t => {
+  const root = await sandbox(t);
+  for (const args of [
+    ['discover'], ['discover', 'x'], ['discover', 'browser', '--owner', 'example'],
+    ['discover', 'browser', '--online', '--owner', '../escape'],
+    ['discover', 'browser', '--limit', '21'],
+    ['discover', 'browser', '--task-file', 'missing.txt'],
+    ['scan', '--online'], ['route', 'browser', '--online']
+  ]) await assert.rejects(invoke(root, [...args, '--native', '--codex-bin', 'asr-nonexistent-binary-experience']), error => {
+    assert.equal(error.code, 1);
+    assert.doesNotMatch(error.stderr, /Unable to start Codex|network request|ENOENT/);
+    return true;
+  });
+});
+
+test('CLI online discovery preserves local results on service failure and marks partial failure', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'library/browser', 'browser-tests', 'Playwright browser testing');
+  const bootstrap = await put(root, 'transport.mjs', "globalThis.fetch = async () => new Response('private error body', { status: 503 });\n");
+  await assert.rejects(run(process.execPath, ['--import', pathToFileURL(bootstrap).href, cli, 'discover', 'Playwright', '--online', '--no-defaults', '--root', join(root, 'library'), '--cwd', root, '--json'], { windowsHide: true }), error => {
+    assert.equal(error.code, 2);
+    const result = JSON.parse(error.stdout);
+    assert.equal(result.local.length, 1);
+    assert.equal(result.remote.status, 'failed');
+    assert.match(result.remote.error, /HTTP 503/);
+    assert.doesNotMatch(error.stdout, /private error body/);
+    assert.deepEqual(result.selectedSkills, []);
+    return true;
+  });
+});
+
+test('standalone helper and CLI return equivalent remote identities without installing files', async t => {
+  const root = await sandbox(t);
+  const bootstrap = await put(root, 'transport.mjs', `globalThis.fetch = async () => Response.json({ skills: [{ id: 'example/library/browser-tests', source: 'example/library', name: 'browser-tests', installs: 1 }] });\n`);
+  const helper = fileURLToPath(new URL('../skills/adaptive-workflow/scripts/search-skills.mjs', import.meta.url));
+  const before = (await readdir(root)).sort();
+  const helperRun = await run(process.execPath, ['--import', pathToFileURL(bootstrap).href, helper, '--query', 'Playwright'], { cwd: root, windowsHide: true });
+  const cliRun = await run(process.execPath, ['--import', pathToFileURL(bootstrap).href, cli, 'discover', 'Playwright', '--online', '--no-defaults', '--root', root, '--cwd', root, '--json'], { windowsHide: true });
+  const standalone = JSON.parse(helperRun.stdout);
+  const discovery = JSON.parse(cliRun.stdout);
+  assert.equal(discovery.remote.status, 'ok');
+  assert.deepEqual(discovery.remote.candidates, standalone.candidates);
+  assert.equal(standalone.candidates[0].id, 'skills.sh:example/library/browser-tests');
+  assert.deepEqual(discovery.selectedSkills, []);
+  assert.deepEqual((await readdir(root)).sort(), before);
+});
 test('CLI task files preserve arbitrary text without evaluating it', async t => {
   const root = await sandbox(t);
   await skill(root, 'library/debug', 'debug', 'Debug root causes');

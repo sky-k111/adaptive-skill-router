@@ -8,6 +8,8 @@ Use the project bindings in the generated entry. Otherwise use a known installed
 
 ```text
 asr scan --cwd <project-root> --json
+asr discover "capability keywords" --cwd <project-root> --json
+asr discover "capability keywords" --online --owner <github-owner> --cwd <project-root> --json
 asr route --task-file <task.txt> --evidence <evidence.json> --cwd <project-root> --json
 asr inspect <exact-id> --cwd <project-root> --json
 ```
@@ -15,6 +17,8 @@ asr inspect <exact-id> --cwd <project-root> --json
 Pass arguments through the host tool with its shell quoting rules; do not interpolate arbitrary task text into a shell command. Use the intended project root for `--cwd`, even when editing a child directory. Without a Git root, disk project discovery covers only that directory and reports the boundary. An empty child inventory does not establish that the parent has no Skills. Add an explicit `--root` only when needed; it inventories a directory without registering it with Codex.
 
 `--native` queries a fresh trusted Codex CLI, not the existing desktop session. Do not combine it with disk-root options. `inspect` reads a discovered manifest; the host still determines eligibility and semantic value.
+
+`discover` searches local names and descriptions without task evidence or method classification; it does not select skills. Local matches retain invocation restrictions and exact identities. `--online` also sends only the explicit capability keywords, optional owner and result limit to skills.sh. Do not send project contents or sensitive task descriptions. Online candidates remain separate and unverified; follow [capability selection](capability-selection.md) to review exact source instructions and prerequisites. Without `--online`, no registry request is made. Remote failure retains local results, sets `remote.status` to `failed` and exits 2; it is not a successful empty search. Offline and successful online discovery exit 0; invalid input and local discovery errors exit 1.
 
 ## Task-bound evidence
 

@@ -1,6 +1,6 @@
 ---
 name: adaptive-skill-router
-description: Choose and explain a proportionate development method when relevant code exploration leaves a knowledge, debugging, planning, testing, or review gap. Make meaningful decisions, adjustments and verification visible in conversation. Clear bounded edits usually proceed directly.
+description: Choose and explain a proportionate development method when relevant code exploration leaves a knowledge, debugging, planning, testing, or review gap. Discover and assess skills for a concrete capability gap. Clear bounded edits usually proceed directly.
 ---
 
 # Adaptive Skill Router
