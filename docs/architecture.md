@@ -8,7 +8,7 @@ The host agent explores code and existing checks, identifies an actual method ga
 - `native.ts`: a short-lived JSON-RPC app-server client calling only `initialize` and `skills/list`. No model turn. The trusted executable is caller-supplied or the installed `codex` executable.
 - `router.ts`: structured evidence validation, method-gap advice, and lightweight bilingual metadata retrieval. `selectedSkills` is always empty: the CLI never claims to make the final semantic selection.
 - `integration.ts`: project-local instruction preview and writes, preserving existing text and making backups. Generated guidance reuses the distributed Skill body and routing reference, copies the canonical investigation, capability-selection and continuity references and file-state helper, and appends trusted CLI/project bindings. Resource collisions and stale previews stop before mutation. Whole-plan checks include unchanged targets and reject redirected parent directories and changed previews before initial mutation; writes are not a transactional filesystem operation. Concurrent directory replacement remains outside its guarantees.
-- `cli.ts`: `scan`, `route`, `inspect`, and `init`; JSON output supports other tools without invoking another model.
+- `cli.ts`: `scan`, `discover`, `route`, `inspect`, and `init`; JSON output supports other tools without invoking another model.
 
 There is no cloud index, embedding service, shell hook, API classifier, global instruction rewrite, automatic dependency installation, or persistent agent process.
 
@@ -29,6 +29,8 @@ Without a Git root, default disk project discovery remains limited to the reques
 Plugin caches remain unverified in disk mode. Symlink/junction cycles terminate through canonical-directory tracking. Different paths to one manifest deduplicate; equal names at different manifests remain separate. Paths and fingerprints are local identities, not portable IDs between machines.
 
 Manifests are read locally to parse metadata, estimate body length and flag broad triggers or possible downstream calls. Bodies are not included in scan JSON. `inspect` is the on-demand disclosure to the host. The character-based token estimate is approximate and excludes dependencies, downstream calls and any model's tokenizer.
+
+Each local candidate carries an inspection fingerprint over the resolved manifest path, normalized instructions and resolved optional `agents/openai.yaml` contents. Policy parsing uses that same metadata snapshot. On-demand reads re-resolve the selected paths rather than trusting cached canonical paths. `inspect --expect` binds a later scan to an earlier retrieval result; omitted tokens deliberately inspect the latest scan. Legacy catalog entries without this evidence require rescanning. This detects entry/metadata drift, including directory-link redirection with identical instructions; it does not lock files, pin supporting resources, certify provenance or capture runtime permission changes.
 
 ## Routing limitations
 

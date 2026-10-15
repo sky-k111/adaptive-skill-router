@@ -28,7 +28,7 @@ Run from this checkout or use an absolute CLI path. Generated guidance binds tha
 | `discover "capability keywords"` | Search local metadata, retaining exact identities and invocation constraints |
 | `discover "capability keywords" --online` | Also retrieve unverified GitHub-source candidates from skills.sh |
 | `route --task-file task.txt --evidence evidence.json` | Suggest a next approach and relevant capability candidates |
-| `inspect <id>` | Read a discovered candidate and check its source fingerprint |
+| `inspect <id> --expect <inspectionFingerprint>` | Read the selected entry only if its manifest identity, instructions and invocation metadata still match |
 | `init` / `init --write` | Preview / apply project-local integration |
 
 ```sh
@@ -38,10 +38,18 @@ node dist/cli.js scan --native --codex-bin /trusted/path/to/codex --json
 node dist/cli.js discover "browser interaction testing" --cwd /path/to/project --json
 node dist/cli.js discover "browser interaction testing" --online --owner example --cwd /path/to/project --json
 node dist/cli.js route --task-file task.txt --evidence evidence.json --cwd /path/to/project --json
-node dist/cli.js inspect <exact-id> --json
+node dist/cli.js inspect <exact-id> --expect <inspectionFingerprint> --json
 ```
 
 Native and custom-root discovery cannot be combined. Native failures are reported rather than replaced silently with disk results. A route never invokes a skill, starts a model or agent, installs a dependency, or authorizes an external action.
+
+### Reading the version that was selected
+
+Local `scan`, `discover` and `route` results include an `inspectionFingerprint`. Pass the selected candidate's token to `inspect --expect`, with the same discovery roots and mode. If the candidate is no longer present, its selected path resolves elsewhere, its `SKILL.md` changes, or `agents/openai.yaml` is added, changed, removed or redirected, inspection fails with exit 1 and no source body. Rediscover and review the new candidate instead of silently accepting it. Invocation metadata includes declared tool dependencies as well as implicit invocation policy.
+
+`inspect` without `--expect` intentionally inspects the latest scan, preserving the existing interface; it cannot bind that scan to an earlier selection. The library's `readSkill(skill, { expectedFingerprint })` always checks the supplied catalog entry against current files and rejects old serialized entries without inspection evidence. The existing `fingerprint` remains the normalized manifest-content hash; the new token also binds resolved paths and optional invocation metadata. BOM/CRLF normalization is preserved.
+
+These checks cover entry instructions and invocation metadata, not every referenced script or document, Codex configuration changes, current desktop enablement or authorization. They are not signatures, filesystem locks or an atomic snapshot. A tool or file change after reading still requires host review before use. Remote candidates have no local inspection token until an authorized local installation is discovered.
 
 ## Local and external capability discovery
 

@@ -83,6 +83,8 @@ If your network needs an existing trusted proxy, the helper supports `--proxy UR
 
 For combined local and optional online discovery, the repository CLI adds `discover "keywords"` and `discover "keywords" --online`; see [router commands](docs/router.md). Discovery does not require a separately installed discovery skill or package manager. The standalone helper is optional and uses the external search endpoint used by the registry's own CLI; continued availability is not guaranteed.
 
+Local candidates include an inspection token. `inspect --expect` checks that their entry instructions, invocation metadata and resolved paths still match the selected version; see [inspection scope and limits](docs/router.md#reading-the-version-that-was-selected).
+
 ## What appears in the conversation
 
 At meaningful decisions, progress updates explain:

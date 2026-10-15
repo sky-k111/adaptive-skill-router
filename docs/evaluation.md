@@ -26,6 +26,16 @@ The terminal initially bypassed an existing local proxy. Repository-local Git pr
 
 Additional implementation tests exercise real local HTTP CONNECT attempts, bounded connection retry, restored CLI networking state, sanitized invalid settings and offline independence. These complement the live smoke; neither test type establishes superiority over default Codex, implicit activation or general cost savings.
 
+### Local inspection drift regression: 2026-10-15
+
+Code inspection found that on-demand reads trusted a cached canonical path and only compared `SKILL.md` content. A retargeted directory link could therefore return the old target's instructions, while changes to `agents/openai.yaml` left invocation metadata stale. Before the fix, the regression run reported five failures: directory retargeting plus the added/changed/removed metadata group and its three subtests, all from missing expected rejection. This is a reproducible implementation defect, not an observed comparative agent-quality result.
+
+Local candidates now expose `inspectionFingerprint`; CLI `inspect --expect` binds the later read to that token. Tests cover identical-content directory and metadata redirection, metadata lifecycle and dependency changes, source changes between separate CLI calls, normalized line endings, legacy catalogs, missing files and successful rediscovery. The complete check run passed 97 tests, skipped two file-symlink checks due to platform permissions, and passed all ten policy scenarios.
+
+A separate local smoke used the actual installed Adaptive Workflow manifest and invocation metadata. Discovery and token-bound inspection matched the installed instructions. A disposable copy then received an explicit-only policy: inspection using the old token exited 1 with no source body; rediscovery returned `explicit-only`, and inspection using the new token succeeded. The original installed manifest and metadata remained unchanged. Raw outputs and the disposable copy stay outside distributed files.
+
+The token covers entry instructions, resolved paths and optional invocation metadata. It does not pin supporting scripts/references, authenticate publishers, lock the filesystem or establish current desktop permission state. This regression does not establish better task outcomes, lower costs or remote registry availability.
+
 ## Independent behavior smoke test
 
 Build, then run `node scripts/create-behavior-workspace.mjs /fresh/path`. Existing directories are rejected. The sandbox has project integration, fixture Skills and three cases:

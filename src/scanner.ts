@@ -9,6 +9,8 @@ import type { Catalog, Diagnostic, Method, Root, ScanOptions, Skill } from './ty
 const MAX_BYTES = 512 * 1024;
 const IGNORE = new Set(['node_modules', '.git', '.venv', 'venv', 'dist', '__pycache__']);
 const digest = (text: string) => createHash('sha256').update(text).digest('hex');
+const normalize = (source: string) => source.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+const STALE = 'Skill changed after discovery or inspection evidence is missing; rescan before loading.';
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const boolean = (value: unknown, fallback: boolean): boolean => {
   if (value === undefined) return fallback;
@@ -76,6 +78,31 @@ async function boundedRead(path: string): Promise<string> {
   const info = await stat(path);
   if (!info.isFile() || info.size > MAX_BYTES) throw new Error(`Not a regular file or exceeds ${MAX_BYTES} bytes.`);
   return readFile(path, 'utf8');
+}
+
+async function sourceSnapshot(manifest: string) {
+  const realPath = await realpath(manifest);
+  const source = await boundedRead(realPath);
+  const metadataPath = join(dirname(manifest), 'agents', 'openai.yaml');
+  let metadata: { realPath: string; source: string } | null = null;
+  try {
+    const target = await realpath(metadataPath);
+    metadata = { realPath: target, source: await boundedRead(target) };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  // Re-resolve both selected paths after reading; cached canonical paths alone
+  // would conceal a retargeted directory junction or metadata symlink.
+  if (await realpath(manifest) !== realPath) throw new Error(STALE);
+  const currentMetadataPath = await realpath(metadataPath).catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  });
+  if (currentMetadataPath !== (metadata?.realPath ?? null)) throw new Error(STALE);
+  const fingerprint = digest(normalize(source));
+  const inspectionFingerprint = digest(JSON.stringify({ realPath, fingerprint,
+    metadata: metadata && { realPath: metadata.realPath, fingerprint: digest(normalize(metadata.source)) } }));
+  return { realPath, source, metadata, fingerprint, inspectionFingerprint };
 }
 
 async function hostRestrictions(options: ScanOptions, diagnostics: Diagnostic[]) {
@@ -151,7 +178,8 @@ export async function scanSkills(options: ScanOptions = {}): Promise<Catalog> {
       if (manifests.length === 1) {
         const manifest = join(path, manifests[0]!.name);
         try {
-          const source = (await boundedRead(manifest)).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+          const snapshot = await sourceSnapshot(manifest);
+          const source = normalize(snapshot.source);
           const match = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(source);
           if (!match) throw new Error('Missing YAML frontmatter.');
           const metadata = yamlMap(match[1]!);
@@ -159,7 +187,7 @@ export async function scanSkills(options: ScanOptions = {}): Promise<Catalog> {
           const body = source.slice(match[0].length);
           const description = metadata.description;
           if (typeof name !== 'string' || !name.trim() || typeof description !== 'string' || !description.trim()) throw new Error('Non-empty name and description are required.');
-          const realPath = await realpath(manifest);
+          const realPath = snapshot.realPath;
           const id = `${root.host}:${digest(realPath).slice(0, 16)}`;
           const existing = skills.get(id);
           if (existing) { existing.origins.push(manifest); return; }
@@ -168,12 +196,10 @@ export async function scanSkills(options: ScanOptions = {}): Promise<Catalog> {
           const disabled = restrictions.disabled.has(realPath) || restrictions.disabled.has(canonical);
           const advisories: string[] = [];
           if (root.host === 'codex') {
-            try {
-              const ui = yamlMap(await boundedRead(join(path, 'agents', 'openai.yaml')));
+            if (snapshot.metadata) {
+              const ui = yamlMap(snapshot.metadata.source);
               if (isObject(ui.policy)) automatic = boolean(ui.policy.allow_implicit_invocation, true);
               if (ui.dependencies) advisories.push('declared-tool-dependencies');
-            } catch (error) {
-              if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
             }
             if (restrictions.configUncertain) automatic = false;
           }
@@ -183,7 +209,8 @@ export async function scanSkills(options: ScanOptions = {}): Promise<Catalog> {
           if (root.scope === 'plugin-cache') advisories.push('plugin-enablement-unverified');
           skills.set(id, {
             id, name: name.trim(), description: description.trim(), path: manifest, realPath,
-            host: root.host, scope: root.scope, origins: [manifest], fingerprint: digest(source),
+            host: root.host, scope: root.scope, origins: [manifest], fingerprint: snapshot.fingerprint,
+            inspectionFingerprint: snapshot.inspectionFingerprint,
             automatic, userInvocable, disabled,
             availability: root.scope === 'plugin-cache' ? 'unverified-plugin' : 'discovered',
             methods: methodHints(name, description), estimatedBodyTokens: Math.ceil(body.length / 4), advisories
@@ -217,9 +244,11 @@ export async function scanSkills(options: ScanOptions = {}): Promise<Catalog> {
   return { schemaVersion: 1, cwd, roots, skills: list, diagnostics };
 }
 
-export async function readSkill(skill: Skill): Promise<string> {
-  const source = await boundedRead(skill.realPath);
-  const normalized = source.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
-  if (digest(normalized) !== skill.fingerprint) throw new Error('Skill changed after discovery; rescan before loading.');
-  return source;
+export async function readSkill(skill: Skill, options: { expectedFingerprint?: string } = {}): Promise<string> {
+  if (!skill.inspectionFingerprint || (options.expectedFingerprint !== undefined && options.expectedFingerprint !== skill.inspectionFingerprint)) throw new Error(STALE);
+  let snapshot;
+  try { snapshot = await sourceSnapshot(skill.path); }
+  catch { throw new Error('Skill source is missing, unreadable or changed after discovery; rescan before loading.'); }
+  if (snapshot.realPath !== skill.realPath || snapshot.fingerprint !== skill.fingerprint || snapshot.inspectionFingerprint !== skill.inspectionFingerprint) throw new Error(STALE);
+  return snapshot.source;
 }

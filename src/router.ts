@@ -46,7 +46,7 @@ function shortlist(task: string, catalog: Catalog, gaps: Method[], limit: number
     const score = matches.length + (methodMatch ? 3 : 0) + (userRequested ? 1000 : 0);
     const reasons = userRequested ? ['Explicitly requested by the user.'] : matchedMethods.map(m => `May help the observed ${m} gap.`);
     if (matches.length) reasons.push(`Metadata overlaps: ${matches.slice(0, 6).join(', ')}.`);
-    return [{ id: skill.id, name: skill.name, path: skill.path, description: skill.description,
+    return [{ id: skill.id, name: skill.name, path: skill.path, inspectionFingerprint: skill.inspectionFingerprint, description: skill.description,
       methods: skill.methods, reasons, estimatedBodyTokens: skill.estimatedBodyTokens,
       advisories: skill.advisories, retrievalScore: score }];
   }).sort((a, b) => b.retrievalScore - a.retrievalScore || a.estimatedBodyTokens - b.estimatedBodyTokens || a.id.localeCompare(b.id)).slice(0, limit);

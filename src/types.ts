@@ -15,6 +15,7 @@ export interface Skill {
   scope: Root['scope'];
   origins: string[];
   fingerprint: string;
+  inspectionFingerprint: string;
   automatic: boolean;
   userInvocable: boolean;
   disabled: boolean;
@@ -63,6 +64,7 @@ export interface Candidate {
   id: string;
   name: string;
   path: string;
+  inspectionFingerprint: string;
   description: string;
   methods: Method[];
   reasons: string[];

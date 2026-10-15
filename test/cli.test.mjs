@@ -165,6 +165,8 @@ test('CLI rejects invalid requests before native discovery', async t => {
     { args: ['scan', 'unexpected'], message: /scan takes no positional/ },
     { args: ['inspect'], message: /one exact skill id/ },
     { args: ['inspect', 'one', 'two'], message: /one exact skill id/ },
+    { args: ['inspect', 'one', '--expect', 'invalid'], message: /inspectionFingerprint/ },
+    { args: ['scan', '--expect', 'a'.repeat(64)], message: /only by inspect/ },
     ...['0', '21', '1.5', 'NaN', '', 'Infinity'].map(limit => ({ args: ['route', 'example', '--limit', limit], message: /integer between 1 and 20/ })),
     { args: ['route', '--task-file', missingFile], message: /ENOENT/ },
     { args: ['route', 'example', '--evidence', missingFile], message: /ENOENT/ },
@@ -203,6 +205,7 @@ test('CLI preserves valid catalog, route and inspect outputs', async t => {
     const decision = JSON.parse(stdout);
     assert.equal(decision.action, 'consider-skills');
     assert.equal(decision.candidates.length, limit === '1' ? 1 : 2);
+    assert.ok(decision.candidates.every(c => c.inspectionFingerprint === catalog.skills.find(s => s.id === c.id).inspectionFingerprint));
     assert.deepEqual(decision.selectedSkills, []);
     assert.equal(decision.approvalCheckRequired, true);
     assert.deepEqual(decision.diagnostics, []);
@@ -217,4 +220,32 @@ test('CLI preserves valid catalog, route and inspect outputs', async t => {
   assert.deepEqual(inspectedSkill.skill, selected);
   assert.equal(inspectedSkill.content, await readFile(selected.path, 'utf8'));
   assert.match(inspectedSkill.warning, /not authorization/);
+});
+
+test('CLI binds discovery to inspection and refuses changed instructions or invocation policy', async t => {
+  for (const change of ['instructions', 'invocation-policy']) await t.test(change, async t => {
+    const root = await sandbox(t);
+    const path = await skill(root, 'library/browser', 'browser-tests', 'Playwright browser testing');
+    const common = ['--no-defaults', '--root', join(root, 'library'), '--json'];
+    const discover = async () => JSON.parse((await invoke(root, ['discover', 'Playwright', ...common])).stdout).local[0];
+    const selected = await discover();
+    const inspect = token => invoke(root, ['inspect', selected.id, '--expect', token, ...common]);
+    assert.equal(JSON.parse((await inspect(selected.inspectionFingerprint)).stdout).skill.inspectionFingerprint, selected.inspectionFingerprint);
+    if (change === 'instructions') await put(root, 'library/browser/SKILL.md', (await readFile(path, 'utf8')) + '\nNEW_INSTRUCTION_SENTINEL');
+    else await put(root, 'library/browser/agents/openai.yaml', 'policy:\n  allow_implicit_invocation: false\n');
+    await assert.rejects(inspect(selected.inspectionFingerprint), error => {
+      assert.equal(error.code, 1);
+      assert.equal(error.stdout, '');
+      assert.match(error.stderr, /rescan/);
+      assert.doesNotMatch(error.stderr, /NEW_INSTRUCTION_SENTINEL/);
+      return true;
+    });
+    const fresh = await discover();
+    assert.equal(fresh.id, selected.id);
+    assert.notEqual(fresh.inspectionFingerprint, selected.inspectionFingerprint);
+    if (change === 'invocation-policy') assert.equal(fresh.eligibility, 'explicit-only');
+    assert.equal(JSON.parse((await inspect(fresh.inspectionFingerprint)).stdout).skill.id, fresh.id);
+    // Without --expect, inspect deliberately reads the latest discovered version.
+    assert.equal(JSON.parse((await invoke(root, ['inspect', fresh.id, ...common])).stdout).skill.inspectionFingerprint, fresh.inspectionFingerprint);
+  });
 });

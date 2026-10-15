@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, symlink, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { scanSkills, readSkill, discoverRoots } from '../dist/index.js';
 import { sandbox, put, skill, options } from './helpers.mjs';
@@ -87,6 +87,93 @@ test('detects content changes before on-demand loading', async t => {
   const catalog = await scanSkills(options(root));
   await writeFile(path, 'changed');
   await assert.rejects(readSkill(catalog.skills[0]), /changed after discovery/);
+});
+
+test('a redirected skill directory is stale even when both manifests contain identical bytes', async t => {
+  const root = await sandbox(t);
+  const content = '---\nname: same\ndescription: Review CLI behavior\n---\nSame instructions\n';
+  await put(root, 'first/SKILL.md', content);
+  await put(root, 'second/SKILL.md', content);
+  const alias = join(root, 'active');
+  await symlink(join(root, 'first'), alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const settings = { ...options(root), roots: [{ path: alias, host: 'codex', scope: 'custom' }] };
+  const [candidate] = (await scanSkills(settings)).skills;
+  assert.equal(await readSkill(candidate), content);
+  // The named junction lies inside this disposable test root; do not remove its target.
+  assert.equal(join(root, 'active'), alias);
+  await rm(alias, { recursive: true });
+  await symlink(join(root, 'second'), alias, process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(readSkill(candidate), /changed after discovery|rescan/);
+  const [fresh] = (await scanSkills(settings)).skills;
+  assert.equal(await readSkill(fresh), content);
+  assert.notEqual(fresh.realPath, candidate.realPath);
+});
+
+test('invocation metadata changes invalidate a cached selection without changing instructions', async t => {
+  for (const change of ['added', 'changed', 'removed']) await t.test(change, async t => {
+    const root = await sandbox(t);
+    await skill(root, 'one', 'one', 'Review CLI behavior');
+    const policy = join(root, 'one/agents/openai.yaml');
+    if (change !== 'added') await put(root, 'one/agents/openai.yaml', 'policy:\n  allow_implicit_invocation: true\n');
+    const [candidate] = (await scanSkills(options(root))).skills;
+    if (change === 'removed') await rm(policy);
+    else await put(root, 'one/agents/openai.yaml', 'policy:\n  allow_implicit_invocation: false\n');
+    await assert.rejects(readSkill(candidate), /changed after discovery|rescan/);
+    const [fresh] = (await scanSkills(options(root))).skills;
+    assert.equal(fresh.automatic, change === 'removed');
+    assert.equal(typeof await readSkill(fresh), 'string');
+  });
+});
+
+test('redirected invocation metadata is stale even with identical policy contents', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'one', 'one', 'Review CLI behavior');
+  const policy = 'policy:\n  allow_implicit_invocation: false\n';
+  await put(root, 'first/openai.yaml', policy);
+  await put(root, 'second/openai.yaml', policy);
+  const alias = join(root, 'one', 'agents');
+  await symlink(join(root, 'first'), alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const [candidate] = (await scanSkills(options(root))).skills;
+  assert.equal(candidate.automatic, false);
+  // Only replace this named junction inside the disposable test root.
+  assert.equal(alias, join(root, 'one', 'agents'));
+  await rm(alias, { recursive: true });
+  await symlink(join(root, 'second'), alias, process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(readSkill(candidate), /rescan/);
+  const [fresh] = (await scanSkills(options(root))).skills;
+  assert.equal(fresh.fingerprint, candidate.fingerprint);
+  assert.notEqual(fresh.inspectionFingerprint, candidate.inspectionFingerprint);
+  assert.equal(fresh.automatic, false);
+  assert.equal(typeof await readSkill(fresh), 'string');
+});
+
+test('dependency changes invalidate inspection without disclosing metadata in the catalog', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'one', 'one', 'Review CLI behavior');
+  await put(root, 'one/agents/openai.yaml', 'dependencies:\n  tools:\n    - value: PRIVATE_TOOL_A\n');
+  const [candidate] = (await scanSkills(options(root))).skills;
+  assert.ok(candidate.advisories.includes('declared-tool-dependencies'));
+  assert.doesNotMatch(JSON.stringify(candidate), /PRIVATE_TOOL/);
+  await put(root, 'one/agents/openai.yaml', 'dependencies:\n  tools:\n    - value: PRIVATE_TOOL_B\n');
+  await assert.rejects(readSkill(candidate), /rescan/);
+  const [fresh] = (await scanSkills(options(root))).skills;
+  assert.equal(fresh.fingerprint, candidate.fingerprint);
+  assert.notEqual(fresh.inspectionFingerprint, candidate.inspectionFingerprint);
+  await assert.rejects(readSkill(fresh, { expectedFingerprint: candidate.inspectionFingerprint }), /rescan/);
+  assert.equal(typeof await readSkill(fresh, { expectedFingerprint: fresh.inspectionFingerprint }), 'string');
+});
+
+test('inspection tolerates normalized line endings and requires fresh evidence for old catalogs', async t => {
+  const root = await sandbox(t);
+  const path = await skill(root, 'one', 'one', 'Review CLI behavior');
+  const [candidate] = (await scanSkills(options(root))).skills;
+  const content = await readSkill(candidate);
+  await writeFile(path, '\uFEFF' + content.replace(/\r?\n/g, '\r\n'));
+  assert.equal(await readSkill(candidate), '\uFEFF' + content.replace(/\r?\n/g, '\r\n'));
+  const { inspectionFingerprint, ...legacy } = candidate;
+  await assert.rejects(readSkill(legacy), /rescan/);
+  await rm(path);
+  await assert.rejects(readSkill(candidate), /missing.*rescan/);
 });
 
 test('non-Git child discovery reports its boundary without scanning ancestor skills', async t => {

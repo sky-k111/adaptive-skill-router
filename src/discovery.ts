@@ -13,7 +13,7 @@ export function discoverLocalSkills(query: string, catalog: Catalog, limit = 5) 
     const matches = [...tokens].filter(token => words.has(token));
     if (!matches.length) return [];
     const eligibility: keyof typeof priority = skill.disabled ? 'disabled' : skill.availability === 'unverified-plugin' ? 'unverified-plugin' : !skill.automatic ? 'explicit-only' : 'candidate';
-    return [{ id: skill.id, name: skill.name, path: skill.path, description: skill.description, eligibility,
+    return [{ id: skill.id, name: skill.name, path: skill.path, inspectionFingerprint: skill.inspectionFingerprint, description: skill.description, eligibility,
       retrievalScore: matches.length, matchedTerms: matches, advisories: skill.advisories,
       estimatedBodyTokens: skill.estimatedBodyTokens }];
   }).sort((a, b) => priority[a.eligibility] - priority[b.eligibility] || b.retrievalScore - a.retrievalScore || a.estimatedBodyTokens - b.estimatedBodyTokens || a.id.localeCompare(b.id)).slice(0, limit);
