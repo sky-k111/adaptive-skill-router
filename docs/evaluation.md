@@ -8,6 +8,8 @@ Harden shipped behavior before adding features. Further comparisons against defa
 
 The current skill scope is selecting and coordinating already-installed skills. The entry, shared selection reference, UI prompts and generated integration now reflect that boundary. Existing command behavior and historical reports are retained. Implementation checks cover the tools and packaging; they do not certify semantic selection quality or implicit activation in a running conversation.
 
+The [installation-to-completion walkthrough](usage-walkthrough-2026-10-15.md) ([中文](usage-walkthrough-2026-10-15.zh-CN.md)) validates the published setup in a fresh CLI profile and records one accepted maintenance task. It includes three environment-blocked attempts, actual instruction reads, worker-side verification failures and independent full acceptance. This is a delivery/usability record, not a new baseline comparison or evidence of general superiority.
+
 - Discovery: verify input rejection before I/O, invocation restrictions, retained local results after online failure, bounded requests and actionable errors that do not expose raw transport details.
 - Source collection: verify commit and blob identities, useful partial results, shared references and cycles, genuine depth/budget failures, and the distinction between collected material and reviewed instructions.
 - Project integration: preserve user content, reject conflicts and stale previews, maintain backups and check repeated application.

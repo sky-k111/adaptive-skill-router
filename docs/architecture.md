@@ -4,6 +4,8 @@ The core skill helps the host choose and coordinate already-installed skills for
 
 The CLI supplies optional local inventory and inspection. Remote search, source collection and file-state utilities remain available outside the primary path; an empty local result does not trigger external discovery. No commands have been removed or added as part of this scope correction.
 
+Native inventory treats each runtime path as a manifest rather than a recursive discovery root. A missing listed manifest must not promote an unlisted descendant or consume its traversal budget. Returned entries must match a runtime-listed path; normal disk inventory retains its existing recursive behavior.
+
 ## Components
 
 - `scanner.ts`: bounded discovery, YAML metadata, Codex invocation restrictions, filesystem identities, source fingerprints and diagnostics.

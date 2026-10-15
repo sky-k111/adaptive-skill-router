@@ -57,15 +57,17 @@ export async function scanNativeSkills(options: ScanOptions & { binary?: string;
   const listing = await listNativeSkills(cwd, options.binary, options.timeoutMs);
   const records = listing.data.filter(row => resolve(row.cwd) === cwd).flatMap(row => row.skills ?? []);
   const valid = records.filter(s => typeof s.path === 'string' && typeof s.name === 'string' && typeof s.enabled === 'boolean');
-  const catalog = await scanSkills({ ...options, cwd, roots: valid.map(s => ({ path: dirname(s.path), host: 'codex', scope: 'custom' })) });
-  for (const skill of catalog.skills) {
+  // Runtime entries identify manifests, not recursive discovery roots. A missing
+  // manifest must not promote a nested skill or consume its scan budget.
+  const catalog = await scanSkills({ ...options, cwd, maxDepth: 0, roots: valid.map(s => ({ path: dirname(s.path), host: 'codex', scope: 'custom' })) });
+  catalog.skills = catalog.skills.filter(skill => {
     const record = valid.find(s => resolve(s.path) === resolve(skill.path));
-    if (record) {
-      // Runtime disabled state is authoritative; never relax a local restriction.
-      skill.disabled ||= !record.enabled;
-      skill.advisories.push('native-cli-discovery-not-desktop-session');
-    }
-  }
+    if (!record) return false;
+    // Runtime disabled state is authoritative; never relax a local restriction.
+    skill.disabled ||= !record.enabled;
+    skill.advisories.push('native-cli-discovery-not-desktop-session');
+    return true;
+  });
   if (records.length !== valid.length) catalog.diagnostics.push({ code: 'native-metadata-incomplete', path: cwd, message: 'Some native skills lack local paths or enablement fields and were excluded.' });
   if (listing.data.some(row => row.errors?.length)) catalog.diagnostics.push({ code: 'native-discovery-errors', path: cwd, message: 'Codex reported discovery errors; catalog may be incomplete.' });
   return catalog;

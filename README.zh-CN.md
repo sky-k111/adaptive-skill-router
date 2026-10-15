@@ -31,6 +31,8 @@ Install the standalone skill from https://github.com/sky-k111/adaptive-skill-rou
 
 使用独立 Skill 的指引不需要 Node.js。可选脚本和仓库命令行工具需要 Node.js 22 或更新版本；显式配置代理需要 Node.js 24.14+。
 
+希望各项目都按需使用、无需每次点名时，请继续完成[安装与跨项目配置](docs/setup.zh-CN.md)。安装 Skill 和设置全局使用约定是两个步骤。
+
 ## 使用
 
 直接说明任务与约束，例如：
@@ -73,6 +75,8 @@ node dist/cli.js inspect <exact-id> --expect <inspectionFingerprint> --cwd /path
 ## 工程质量与验证
 
 当前优先打磨已有能力的正确性、兼容性和使用体验，暂停功能扩张及与默认 Codex 的进一步对照。
+
+当前仍是早期试用版。[从安装到完整任务的使用记录](docs/usage-walkthrough-2026-10-15.zh-CN.md)展示了公开安装、可复制的全局约定、实际 Skill 读取及修复验收，也保留了环境失败和未验证的边界。
 
 `npm run check` 运行实现测试和确定性的路由策略检查。通过检查不代表模型推理能力更强，也不能证明节省 Token。[工程验证与历史记录](docs/evaluation.md)保留了此前的结果，包括未能证明稳定优势的对照。私人配置、原始任务材料和生成的接入文件不随项目发布。
 

@@ -31,6 +31,8 @@ Alternatively, copy the entire `skills/adaptive-workflow` directory into a suppo
 
 The standalone guidance needs no Node.js runtime. Optional repository tools and bundled scripts require Node.js 22 or newer; explicit proxy configuration needs Node.js 24.14+.
 
+For cross-project use without naming the manager each time, follow [Install and use across projects](docs/setup.md). Installing the skill alone and adding a global working agreement are separate steps.
+
 ## Use
 
 State the task and constraints, for example:
@@ -73,6 +75,8 @@ This project does not provide a global scheduler, automatic dependency setup or 
 ## Engineering quality and evidence
 
 Development prioritizes correctness, compatibility and usability of shipped capabilities. Feature expansion and further default-Codex comparisons are paused.
+
+This is an early preview. The [installation-to-completion walkthrough](docs/usage-walkthrough-2026-10-15.md) records public installation, the portable global agreement, actual skill reads and an accepted source repair, including failed environment attempts and verification limits.
 
 Run `npm run check` for implementation tests and deterministic routing regressions. These checks do not establish better model reasoning or token savings. [Engineering validation and historical evidence](docs/evaluation.md) retains prior results, including comparisons that did not establish a reliable advantage. Private configuration, raw task evidence and generated integrations are not distributed.
 
