@@ -20,6 +20,41 @@ for (const helper of helpers) {
   const { searchRemoteSkills } = await import(helper.href);
   const label = helper.pathname.includes('/adaptive-workflow/') ? 'canonical' : 'portable';
 
+  test(`${label}: HTTP cleanup failures preserve status diagnostics without retries`, async () => {
+    let calls = 0;
+    await assert.rejects(searchRemoteSkills({ query: 'node cli' }, async () => {
+      calls++;
+      return { ok: false, status: 503, body: { cancel: async () => { throw Error('PRIVATE_CANCEL'); } } };
+    }), error => /HTTP 503/.test(error.message) && !/PRIVATE/.test(error.message));
+    assert.equal(calls, 1);
+  });
+
+  test(`${label}: redirect cleanup failures do not suppress valid results`, async () => {
+    let calls = 0;
+    const result = await searchRemoteSkills({ query: 'node cli' }, async () => {
+      if (++calls === 1) return { status: 307, headers: new Headers({ location: '/api/search' }), body: { cancel: async () => { throw Error('PRIVATE_CANCEL'); } } };
+      return Response.json({ skills: [] });
+    });
+    assert.equal(calls, 2);
+    assert.deepEqual(result.candidates, []);
+  });
+
+  for (const mode of ['transport', 'body', 'retry']) {
+    test(`${label}: ${mode} failures do not expose raw errors or retry bodies`, async () => {
+      let calls = 0;
+      await assert.rejects(searchRemoteSkills({ query: 'node cli' }, async () => {
+        calls++;
+        if (mode === 'transport') throw Error('PRIVATE_TRANSPORT');
+        if (mode === 'retry') {
+          if (calls === 1) throw new TypeError('PRIVATE_FIRST_ATTEMPT');
+          throw Error('PRIVATE_SECOND_ATTEMPT');
+        }
+        return new Response(new ReadableStream({ start(controller) { controller.error(Error('PRIVATE_BODY')); } }));
+      }), error => /Registry (network request failed|response could not be read)/.test(error.message) && !/PRIVATE/.test(error.message));
+      assert.equal(calls, mode === 'retry' ? 2 : 1);
+    });
+  }
+
   for (const cleanupRejects of [false, true]) {
     test(`${label}: oversized Content-Length awaits cancellation (${cleanupRejects ? 'rejects' : 'resolves'}) without reading or retrying`, async t => {
       const cleanup = Promise.withResolvers();

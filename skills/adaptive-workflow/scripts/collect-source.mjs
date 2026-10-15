@@ -109,6 +109,7 @@ export async function collectSkillSource(options, transport = globalThis.fetch) 
     for (const p of licenses) queue.push({ path: p, role: 'license', depth: 0 });
     for (const p of include) queue.push({ path: p, role: 'explicit-support', depth: 0 });
     const files = [], unresolved = [], seen = new Set();
+    const scheduled = new Set(queue.map(item => item.path));
     let total = 0;
     for (let i = 0; i < queue.length; i++) {
       const item = queue[i];
@@ -129,10 +130,13 @@ export async function collectSkillSource(options, transport = globalThis.fetch) 
         files.push({ path: item.path, role: item.role, gitBlobSha: entry.sha, sha256: hash('sha256', bytes), url: `https://github.com/${source}/blob/${commit.sha}/${item.path.split('/').map(encodeURIComponent).join('/')}`, content });
         if (/\.(?:md|mdx|markdown)$/i.test(item.path)) for (const p of references(content, item.path)) {
           if (p.startsWith('!')) unresolved.push({ path: item.path, reason: p.slice(1) });
-          else if (!seen.has(p)) {
+          else if (!scheduled.has(p)) {
             if (item.depth >= 2) unresolved.push({ path: p, reason: 'reference-depth-limit' });
             else if (queue.length >= 128) unresolved.push({ path: p, reason: 'reference-count-limit' });
-            else queue.push({ path: p, role: 'support', depth: item.depth + 1 });
+            else {
+              scheduled.add(p);
+              queue.push({ path: p, role: 'support', depth: item.depth + 1 });
+            }
           }
         }
       } catch (error) { unresolved.push({ path: item.path, reason: reason(error) }); }

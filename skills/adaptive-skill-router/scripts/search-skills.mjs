@@ -10,6 +10,7 @@ const OWNER = /^[a-z0-9](?:[a-z0-9-]{0,38})$/i;
 const REPO = /^[a-z0-9][a-z0-9._-]{0,99}$/i;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
 const CONTROL = /[\p{Cc}\p{Cf}]/u;
+const NETWORK_ERROR = 'Registry network request failed; check the network or configure a trusted proxy with --proxy / ASR_HTTPS_PROXY. Local skills and host browsing remain alternatives.';
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const STOP_WORDS = new Set('a an and are as at be been before by can do for from has have if in is it its of on or our that the their then these this to use used using was we when where which with you your'.split(' '));
 
@@ -76,7 +77,10 @@ async function readResponse(response) {
   const reader = response.body.getReader();
   try {
     while (true) {
-      const { value, done } = await reader.read();
+      let chunk;
+      try { chunk = await reader.read(); }
+      catch { throw new Error('Registry response could not be read.'); }
+      const { value, done } = chunk;
       if (done) break;
       size += value.byteLength;
       if (size > MAX_BYTES) throw new Error('Registry response exceeds the size limit.');
@@ -106,12 +110,13 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
       } catch (error) {
         // One extra connection attempt, sharing the original total timeout.
         // HTTP errors and response/schema failures are never retried.
-        if (!(error instanceof TypeError) || controller.signal.aborted || connectionRetries) throw error;
+        if (!(error instanceof TypeError) || controller.signal.aborted || connectionRetries) throw new Error(NETWORK_ERROR);
         connectionRetries++;
-        response = await transport(url, { signal: controller.signal, redirect: 'manual', headers: { Accept: 'application/json' } });
+        try { response = await transport(url, { signal: controller.signal, redirect: 'manual', headers: { Accept: 'application/json' } }); }
+        catch { throw new Error(NETWORK_ERROR); }
       }
       if (![301, 302, 303, 307, 308].includes(response.status)) break;
-      await response.body?.cancel();
+      await response.body?.cancel().catch(() => {});
       const location = response.headers.get('location');
       if (!location || redirects >= 2) throw new Error('Registry redirect could not be resolved.');
       const next = new URL(location, url);
@@ -119,7 +124,7 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
       url = next;
     }
     if (!response.ok) {
-      await response.body?.cancel();
+      await response.body?.cancel().catch(() => {});
       throw new Error(`Registry search failed (HTTP ${response.status}); the HTTP response was not retried.`);
     }
     const payload = await readResponse(response);
@@ -161,7 +166,7 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
     };
   } catch (error) {
     if (controller.signal.aborted) throw new Error('Registry search timed out; the total deadline was exhausted.');
-    if (error instanceof TypeError) throw new Error('Registry network request failed; check the network or configure a trusted proxy with --proxy / ASR_HTTPS_PROXY. Local skills and host browsing remain alternatives.');
+    if (error instanceof TypeError) throw new Error(NETWORK_ERROR);
     throw error;
   } finally { clearTimeout(timer); }
 }

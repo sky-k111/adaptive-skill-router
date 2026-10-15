@@ -71,6 +71,36 @@ test('incomplete references and missing licenses are explicit, not successful so
   assert.equal(result.reviewStatus, 'not-reviewed');
 });
 
+test('shared references pending at the depth boundary are collected once without false gaps', async () => {
+  const fixture = repository({
+    'skills/review/SKILL.md': '[first](references/first.md) [second](references/second.md)',
+    'skills/review/references/first.md': '[left](left.md)',
+    'skills/review/references/second.md': '[right](right.md)',
+    'skills/review/references/left.md': '[shared](right.md)',
+    'skills/review/references/right.md': '[cycle](left.md)'
+  });
+  const result = await collectSkillSource(options, fixture.transport);
+  assert.equal(result.status, 'complete');
+  assert.deepEqual(result.unresolved, []);
+  for (const name of ['left.md', 'right.md']) {
+    const path = `skills/review/references/${name}`;
+    const entry = fixture.entries.find(file => file.path === path);
+    assert.equal(result.files.filter(file => file.path === path).length, 1);
+    assert.equal(fixture.calls.filter(url => url.endsWith(`/git/blobs/${entry.sha}`)).length, 1);
+  }
+});
+
+test('an unscheduled reference beyond the depth boundary remains an explicit gap', async () => {
+  const fixture = repository({
+    'skills/review/references/details.md': '[deeper](deeper.md)',
+    'skills/review/references/deeper.md': 'Outside the automatic reference depth.'
+  });
+  const result = await collectSkillSource(options, fixture.transport);
+  assert.equal(result.status, 'incomplete');
+  assert.ok(result.unresolved.some(item => item.path.endsWith('deeper.md') && item.reason === 'reference-depth-limit'));
+  assert.ok(!result.files.some(file => file.path.endsWith('deeper.md')));
+});
+
 test('rejected traversal and ambiguous manifests never become executable source', async () => {
   let calls = 0;
   for (const change of [{ source: 'https://attacker/x' }, { path: '../SKILL.md', skill: undefined }, { include: ['x/%2e%2e/secret'] }, { ref: 'main?secret=1' }]) {

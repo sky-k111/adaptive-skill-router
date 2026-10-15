@@ -8,7 +8,7 @@ Adaptive Workflow helps Codex decide how to approach software development work a
 
 The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. Optional helpers support file-state checks, explainable skill retrieval and commit-pinned source collection.
 
-Behavioral effectiveness remains experimental. Current comparative evaluations do not establish reliable superiority over default Codex or general token savings. The latest [discovery validation and maintenance comparison](docs/discovery-validation-2026-10-15.md) retains both the engineering results and the negative comparison. Use the published evidence and its limitations when deciding whether this guidance fits your work.
+Development currently focuses on the correctness, reliability, compatibility and usability of existing capabilities. Feature expansion and further default-Codex comparisons are paused. Earlier evaluations do not establish reliable superiority or general token savings; the [published report](docs/discovery-validation-2026-10-15.md) retains those results and limitations. See [engineering validation](docs/evaluation.md) for the current checks.
 
 ## Core capabilities
 

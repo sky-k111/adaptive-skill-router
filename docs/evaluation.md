@@ -1,10 +1,21 @@
-# Evaluate outcomes, not ceremony
+# Engineering validation and historical evidence
 
 `npm run check` runs implementation tests and ten deterministic evidence-policy scenarios. Passing them establishes expected behavior for those inputs, not improved agent intelligence or lower token cost.
 
+## Current development priority
+
+Harden shipped behavior before adding features. Further comparisons against default Codex are paused. Historical reports and procedures below preserve prior evidence; they are not instructions to launch new comparative campaigns or a prerequisite for routine maintenance.
+
+- Discovery: verify input rejection before I/O, invocation restrictions, retained local results after online failure, bounded requests and actionable errors that do not expose raw transport details.
+- Source collection: verify commit and blob identities, useful partial results, shared references and cycles, genuine depth/budget failures, and the distinction between collected material and reviewed instructions.
+- Project integration: preserve user content, reject conflicts and stale previews, maintain backups and check repeated application.
+- Distribution: keep portable resources synchronized and inspect package contents for private configuration, raw evidence and generated workspaces.
+
+Regression tests now cover a collected shared reference incorrectly reported as a depth-limit gap, cleanup failures masking HTTP diagnostics or stopping a permitted redirect, and raw transport/body errors escaping through search results. These use controlled responses and exercise existing contracts without invoking an agent or relying on registry availability.
+
 ## Current checks
 
-The latest [discovery tooling and actual maintenance comparison](discovery-validation-2026-10-15.md) ([中文](discovery-validation-2026-10-15.zh-CN.md)) records live source collection, explainable reranking, 140 passing local implementation tests and an eight-session comparison. Both arms accepted 4/4; Adaptive used 24.1% more uncached input in that sample. No reliable quality or cost advantage was established.
+The previous [discovery tooling and actual maintenance report](discovery-validation-2026-10-15.md) ([中文](discovery-validation-2026-10-15.zh-CN.md)) records live source collection, explainable reranking, 140 passing local implementation tests at that revision and an eight-session comparison. Both arms accepted 4/4; Adaptive used 24.1% more uncached input in that sample. No reliable quality or cost advantage was established. Its test count describes that recorded revision, not the current suite.
 
 Implementation tests cover malformed metadata, aliases and Unicode, duplicate names, symlink/junction loops, invocation restrictions, disabled configuration, cache uncertainty, source changes, exploration-first routing, evidence binding, explicit choices, safe previews, backups and idempotent integration. Some systems cannot create file symlinks; that check explicitly reports a skip while directory-link checks can still run.
 
@@ -38,7 +49,11 @@ A separate local smoke used the actual installed Adaptive Workflow manifest and 
 
 The token covers entry instructions, resolved paths and optional invocation metadata. It does not pin supporting scripts/references, authenticate publishers, lock the filesystem or establish current desktop permission state. This regression does not establish better task outcomes, lower costs or remote registry availability.
 
-## Independent behavior smoke test
+## Historical behavior procedures and results
+
+The remaining sections retain earlier evaluation methods and observations for traceability. Current maintenance uses the engineering checks above; no new baseline comparison is scheduled.
+
+### Independent behavior smoke test
 
 Build, then run `node scripts/create-behavior-workspace.mjs /fresh/path`. Existing directories are rejected. The sandbox has project integration, fixture Skills and three cases:
 
@@ -118,7 +133,7 @@ The new arm read the three operational references, saved selected-file fingerpri
 
 Observed total wall time was 234.243 seconds for the old arm and 333.918 for the new arm. Cumulative input counters were 387,776 and 568,075 tokens respectively; uncached input was 49,472 and 67,339, and output was 9,860 and 14,115. Second-stage counters include the first stage. The new run consumed more time and tokens while independent acceptance was equal. Concurrent execution, one synthetic pair, explicit invocation and reused staged conversations prevent a general speed, quality or causal claim. This run establishes exercised methods and correctness for the tested contract, not superiority over default Codex or activation in an existing desktop session.
 
-Run paired trials on clean copies of representative real tasks, with the same model/settings/tools/constraints and repeated runs. Compare default Codex, adaptive integration, and explicitly configured framework workflows. Keep prompt wording and acceptance tests consistent; include both small edits and difficult investigations, missing capabilities and misleading Skills.
+Earlier comparative trials used clean copies of real tasks with matched model/settings/tools/constraints and repeated runs, comparing default Codex, adaptive integration and explicitly configured framework workflows. Their procedures and acceptance limits remain recorded in the linked reports. Further such comparisons are paused.
 
 Measure acceptance-test correctness, regression defects, scope creep, rework, elapsed time, user interruptions, and observed token usage when the platform exposes it. Treat reading and chained Skill costs as part of total execution cost. Count failed and incomplete runs, and document unavailable metrics. Do not use the number of invoked Skills or completed workflow stages as the target metric.
 

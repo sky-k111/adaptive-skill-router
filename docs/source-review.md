@@ -27,6 +27,8 @@ Collected material includes the entry, optional `agents/openai.yaml`, ancestor l
 
 The current limits are 16 files, 128 KiB per file, 1 MiB of collected text, two reference levels, 128 queued references, a 4 MiB tree response and 20,000 tree entries. Truncated trees fail. Symlinks, submodules, binary text, oversized or missing files and out-of-repository references remain unresolved. One connection failure may be retried within the shared deadline; HTTP errors, redirects and schema/content failures are not retried. Renamed/moved repositories need an explicit canonical source instead of a silently followed redirect.
 
+Shared local references are scheduled once. A link to an already queued file does not consume another queue slot or create a depth-limit failure; a newly discovered path beyond the depth limit remains unresolved. Cycles between already scheduled files do not trigger additional requests.
+
 ## Result contract
 
 - Exit **0**, `status: "complete"`: the bounded collection finished without unresolved entries.
