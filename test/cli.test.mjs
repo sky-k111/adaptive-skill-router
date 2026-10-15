@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { readFile, readdir } from 'node:fs/promises';
+import * as http from 'node:http';
 import { sandbox, put, skill, evidence } from './helpers.mjs';
 const run = promisify(execFile);
 const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
@@ -38,6 +39,64 @@ test('CLI validates discovery scope and query before native discovery or network
     assert.doesNotMatch(error.stderr, /Unable to start Codex|network request|ENOENT/);
     return true;
   });
+});
+
+test('bad private network settings fail online without leaking secrets and do not affect offline discovery', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'library/browser', 'browser-tests', 'Playwright testing');
+  await put(root, '.adaptive-skill-router/local-settings.json', '{PRIVATE_INVALID_SETTINGS');
+  const args = ['discover', 'Playwright', '--no-defaults', '--root', join(root, 'library'), '--json'];
+  assert.equal(JSON.parse((await invoke(root, args)).stdout).remote.status, 'not-requested');
+  await assert.rejects(invoke(root, [...args, '--online']), error => {
+    assert.equal(error.code, 2);
+    const value = JSON.parse(error.stdout);
+    assert.equal(value.local.length, 1);
+    assert.match(value.remote.error, /Invalid local registry settings/);
+    assert.doesNotMatch(error.stdout, /PRIVATE_INVALID_SETTINGS/);
+    return true;
+  });
+});
+
+test('CLI explicit proxy uses an actual CONNECT tunnel without contacting an external service', async t => {
+  if (typeof http.setGlobalProxyFromEnv !== 'function') { t.skip('Explicit proxy configuration needs Node.js 24.14+.'); return; }
+  const root = await sandbox(t);
+  const targets = [];
+  const server = http.createServer();
+  server.on('connect', (request, socket) => {
+    targets.push(request.url);
+    socket.end('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n');
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const proxy = `http://127.0.0.1:${server.address().port}`;
+  await assert.rejects(invoke(root, ['discover', 'browser', '--online', '--proxy', proxy, '--no-defaults', '--root', root, '--json']), error => {
+    assert.equal(error.code, 2);
+    assert.equal(JSON.parse(error.stdout).remote.status, 'failed');
+    return true;
+  });
+  assert.deepEqual(targets, ['skills.sh:443', 'skills.sh:443']);
+});
+
+test('network configuration precedence is CLI then environment then private project settings', async t => {
+  if (typeof http.setGlobalProxyFromEnv !== 'function') { t.skip('Explicit proxy configuration needs Node.js 24.14+.'); return; }
+  const root = await sandbox(t);
+  const bootstrap = await put(root, 'transport.mjs', 'globalThis.fetch = async () => Response.json({skills: []});\n');
+  const settings = '.adaptive-skill-router/local-settings.json';
+  const common = ['--import', pathToFileURL(bootstrap).href, cli, 'discover', 'browser', '--online', '--no-defaults', '--root', root, '--cwd', root, '--json'];
+  await put(root, settings, JSON.stringify({ registryProxy: 'PRIVATE_BAD_PROXY' }));
+  const cases = [
+    { args: ['--proxy', 'http://127.0.0.1:1'], env: { ...process.env, ASR_HTTPS_PROXY: 'PRIVATE_BAD_ENV' } },
+    { args: [], env: { ...process.env, ASR_HTTPS_PROXY: 'http://127.0.0.1:1' } }
+  ];
+  for (const { args, env } of cases) {
+    const result = await run(process.execPath, [...common, ...args], { env, windowsHide: true });
+    assert.equal(JSON.parse(result.stdout).remote.status, 'ok');
+    assert.doesNotMatch(result.stdout, /PRIVATE_BAD/);
+  }
+  await put(root, settings, JSON.stringify({ registryProxy: 'http://127.0.0.1:1' }));
+  const clean = { ...process.env };
+  delete clean.ASR_HTTPS_PROXY;
+  assert.equal(JSON.parse((await run(process.execPath, common, { env: clean, windowsHide: true })).stdout).remote.status, 'ok');
 });
 
 test('CLI online discovery preserves local results on service failure and marks partial failure', async t => {

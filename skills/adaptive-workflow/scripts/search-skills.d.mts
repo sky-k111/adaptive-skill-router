@@ -11,3 +11,4 @@ export interface RemoteSearchResult {
 }
 export function validateSearch(options: SearchOptions): Required<Omit<SearchOptions, 'owner'>> & { owner?: string };
 export function searchRemoteSkills(options: SearchOptions, transport?: typeof globalThis.fetch): Promise<RemoteSearchResult>;
+export function configureCliProxy(proxy?: string): () => void;

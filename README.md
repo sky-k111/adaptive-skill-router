@@ -79,6 +79,8 @@ node <skill-directory>/scripts/search-skills.mjs --query "browser interaction te
 
 The optional helper sends only the explicit query and optional owner/limit to skills.sh; use non-sensitive capability keywords. It does not read the project, install packages or execute discovered skills. GitHub-backed results include exact source identities and links, and remain unverified until the host reviews their actual instructions, prerequisites and compatibility. Popularity is not a quality score. Network failures, schema changes and successful empty results are distinct. See [capability selection](skills/adaptive-workflow/references/capability-selection.md) for the selection and authorization boundaries.
 
+If your network needs an existing trusted proxy, the helper supports `--proxy URL` or `ASR_HTTPS_PROXY` on Node.js 24.14+. The repository CLI also supports a private project setting. No machine-specific proxy is shipped, and certificate validation remains enabled. See [proxy setup and runtime compatibility](docs/router.md#existing-proxy-support).
+
 For combined local and optional online discovery, the repository CLI adds `discover "keywords"` and `discover "keywords" --online`; see [router commands](docs/router.md). Discovery does not require a separately installed discovery skill or package manager. The standalone helper is optional and uses the external search endpoint used by the registry's own CLI; continued availability is not guaranteed.
 
 ## What appears in the conversation

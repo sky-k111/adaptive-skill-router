@@ -79,6 +79,8 @@ node <skill-directory>/scripts/search-skills.mjs --query "browser interaction te
 
 仓库命令行工具还提供 `discover "关键词"` 和附带联网检索的 `discover "关键词" --online`，详见[可选工具说明](docs/router.md)。不需要额外安装某个发现类 Skill 或包管理器。脚本使用的是检索服务自身命令行工具采用的外部接口，其持续可用性仍取决于服务方。
 
+如果当前网络需要代理，可以在 Node.js 24.14 或更新版本下通过 `--proxy URL` 或 `ASR_HTTPS_PROXY` 使用已有的可信代理；仓库工具也支持私有的项目配置。代理地址不随项目发布，证书校验保持开启。具体配置和旧版运行时的替代方式见[代理支持说明](docs/router.md#existing-proxy-support)。
+
 ## 在对话中如何体现
 
 工作推进到重要判断或实质进展时，应让用户知道：目前确认了什么，还缺什么信息，为什么采取这个方法，接下来要检查哪种行为。需求或证据变化时，应说明原方案哪里需要调整、哪些成果可以继续使用。交付时，应明确验证范围和未验证事项。

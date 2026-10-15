@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { scanSkills, readSkill } from './scanner.js';
 import { routeTask, validateEvidence } from './router.js';
 import { planIntegration, writeIntegration } from './integration.js';
 import { scanNativeSkills } from './native.js';
 import { discoverLocalSkills, searchRemoteSkills, validateSearch } from './discovery.js';
+import { configureCliProxy } from '../skills/adaptive-workflow/scripts/search-skills.mjs';
 import type { ScanOptions, Root } from './types.js';
 
 const HELP = `Adaptive Skill Router 0.1.0 — Codex, explore first.
 
   asr scan [--cwd PATH] [--root PATH] [--include-plugin-cache] [--json]
-  asr discover "CAPABILITY KEYWORDS" [--online] [--owner OWNER] [--limit 5] [--json]
+  asr discover "CAPABILITY KEYWORDS" [--online] [--owner OWNER] [--proxy URL] [--limit 5] [--json]
   asr route "TASK" [--evidence FILE] [--skill ID] [--limit 5] [--json]
   asr route --task-file FILE [--evidence FILE] [--json]
   asr inspect ID [--json]
@@ -37,14 +38,14 @@ async function main() {
     'include-plugin-cache': { type: 'boolean' }, write: { type: 'boolean' },
     help: { type: 'boolean', short: 'h' }, version: { type: 'boolean' },
     native: { type: 'boolean' }, 'codex-bin': { type: 'string' },
-    online: { type: 'boolean' }, owner: { type: 'string' }
+    online: { type: 'boolean' }, owner: { type: 'string' }, proxy: { type: 'string' }
   } });
   if (values.version) { console.log('0.1.0'); return; }
   const [command, ...args] = positionals;
   if (values.help || !command) { console.log(HELP); return; }
   const cwd = resolve(values.cwd ?? process.cwd());
   const output = (data: unknown, human: string) => console.log(values.json ? JSON.stringify(data, null, 2) : human);
-  if ((values.online || values.owner !== undefined) && command !== 'discover') throw new Error('--online and --owner are supported only by discover.');
+  if ((values.online || values.owner !== undefined || values.proxy !== undefined) && command !== 'discover') throw new Error('--online, --owner and --proxy are supported only by discover.');
   if (command === 'init') {
     if (args.length) throw new Error('init takes no positional arguments.');
     const plans = await planIntegration(cwd);
@@ -63,6 +64,7 @@ async function main() {
   if (command === 'discover') {
     if (values['task-file'] !== undefined || values.evidence !== undefined || values.skill?.length) throw new Error('discover accepts capability keywords, not task files, evidence or explicit skill selections.');
     if (values.owner !== undefined && !values.online) throw new Error('--owner requires --online.');
+    if (values.proxy !== undefined && !values.online) throw new Error('--proxy requires --online.');
     query = args.join(' ');
     // Validate before accessing local files, starting native discovery or networking.
     query = validateSearch({ query, owner: values.owner, limit }).query;
@@ -83,11 +85,26 @@ async function main() {
     const local = discoverLocalSkills(query, catalog, limit);
     let remote;
     if (values.online) {
-      try { remote = { status: 'ok', ...await searchRemoteSkills({ query, owner: values.owner, limit }) }; }
+      let restore = () => {};
+      try {
+        let proxy = values.proxy ?? process.env.ASR_HTTPS_PROXY;
+        if (proxy === undefined) {
+          const settings = resolve(cwd, '.adaptive-skill-router/local-settings.json');
+          try {
+            if ((await stat(settings)).size > 4096) throw new Error('Local settings exceed the size limit.');
+            const local = JSON.parse(await readFile(settings, 'utf8'));
+            if (!local || typeof local !== 'object' || Array.isArray(local)) throw new Error('Local settings must be an object.');
+            proxy = local.registryProxy;
+          } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('Invalid local registry settings; review .adaptive-skill-router/local-settings.json.'); }
+        }
+        restore = configureCliProxy(proxy);
+        remote = { status: 'ok', ...await searchRemoteSkills({ query, owner: values.owner, limit }) };
+      }
       catch (error) {
         remote = { status: 'failed', candidates: [], error: (error as Error).message };
         process.exitCode = 2;
       }
+      finally { restore(); }
     } else remote = { status: 'not-requested', candidates: [] };
     output({ schemaVersion: 1, query, local, remote, diagnostics: catalog.diagnostics, selectedSkills: [],
       limitation: 'Metadata retrieval only. Local presence is not current-session availability; remote entries are unverified. The host must inspect instructions, prerequisites and conflicts before choosing. Nothing is installed or executed.' },

@@ -3,6 +3,7 @@
 import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import * as http from 'node:http';
 
 const MAX_BYTES = 512 * 1024;
 const OWNER = /^[a-z0-9](?:[a-z0-9-]{0,38})$/i;
@@ -10,6 +11,16 @@ const REPO = /^[a-z0-9][a-z0-9._-]{0,99}$/i;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
 const CONTROL = /[\p{Cc}\p{Cf}]/u;
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+// CLI entry points only: do not implicitly replace a library caller's dispatcher.
+export function configureCliProxy(proxy) {
+  if (proxy === undefined) return () => {};
+  let url;
+  try { url = new URL(proxy); } catch { throw new Error('Proxy must be an HTTP(S) URL without credentials, path, query or fragment.'); }
+  if (typeof proxy !== 'string' || proxy.length > 512 || CONTROL.test(proxy) || !['http:', 'https:'].includes(url.protocol) || !url.hostname || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new Error('Proxy must be an HTTP(S) URL without credentials, path, query or fragment.');
+  if (typeof http.setGlobalProxyFromEnv !== 'function') throw new Error('Explicit proxy support requires Node.js 24.14+; alternatively start a compatible Node.js with --use-env-proxy and HTTPS_PROXY.');
+  return http.setGlobalProxyFromEnv({ HTTP_PROXY: url.href, HTTPS_PROXY: url.href });
+}
 
 export function validateSearch({ query, owner, limit = 5, timeoutMs = 8000 } = {}) {
   if (typeof query !== 'string' || CONTROL.test(query)) throw new Error('Search query must be plain text without control characters.');
@@ -51,10 +62,19 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
+  let connectionRetries = 0;
   try {
     let url = endpoint;
     for (let redirects = 0; ; redirects++) {
-      response = await transport(url, { signal: controller.signal, redirect: 'manual', headers: { Accept: 'application/json' } });
+      try {
+        response = await transport(url, { signal: controller.signal, redirect: 'manual', headers: { Accept: 'application/json' } });
+      } catch (error) {
+        // One extra connection attempt, sharing the original total timeout.
+        // HTTP errors and response/schema failures are never retried.
+        if (!(error instanceof TypeError) || controller.signal.aborted || connectionRetries) throw error;
+        connectionRetries++;
+        response = await transport(url, { signal: controller.signal, redirect: 'manual', headers: { Accept: 'application/json' } });
+      }
       if (![301, 302, 303, 307, 308].includes(response.status)) break;
       await response.body?.cancel();
       const location = response.headers.get('location');
@@ -65,7 +85,7 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
     }
     if (!response.ok) {
       await response.body?.cancel();
-      throw new Error(`Registry search failed (HTTP ${response.status}); no automatic retry was made.`);
+      throw new Error(`Registry search failed (HTTP ${response.status}); the HTTP response was not retried.`);
     }
     const payload = await readResponse(response);
     if (!object(payload) || !Array.isArray(payload.skills)) throw new Error('Registry search schema changed: expected a skills array.');
@@ -93,21 +113,28 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
     return {
       schemaVersion: 1, provider: 'skills.sh', query, ...(owner ? { owner } : {}),
       fetchedAt: new Date().toISOString(), candidates,
-      diagnostics: excluded ? [{ code: 'registry-entries-excluded', message: `${excluded} malformed, duplicate or out-of-scope entries excluded.` }] : [],
+      diagnostics: [
+        ...(excluded ? [{ code: 'registry-entries-excluded', message: `${excluded} malformed, duplicate or out-of-scope entries excluded.` }] : []),
+        ...(connectionRetries ? [{ code: 'registry-connection-retried', message: 'One failed connection attempt was retried within the original timeout.' }] : [])
+      ],
       selectedSkills: [],
       limitation: 'Untrusted registry metadata only. Provider order and install counts do not prove suitability or safety. Review exact source instructions, dependencies and host availability before selection; discovery never installs or executes.'
     };
   } catch (error) {
-    if (controller.signal.aborted) throw new Error('Registry search timed out; no automatic retry was made.');
-    if (error instanceof TypeError) throw new Error('Registry network request failed; use local skills or host browsing.');
+    if (controller.signal.aborted) throw new Error('Registry search timed out; the total deadline was exhausted.');
+    if (error instanceof TypeError) throw new Error('Registry network request failed; check the network or configure a trusted proxy with --proxy / ASR_HTTPS_PROXY. Local skills and host browsing remain alternatives.');
     throw error;
   } finally { clearTimeout(timer); }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  let restore = () => {};
   try {
-    const { values } = parseArgs({ options: { query: { type: 'string' }, owner: { type: 'string' }, limit: { type: 'string' }, 'timeout-ms': { type: 'string' } } });
-    const result = await searchRemoteSkills({ query: values.query, owner: values.owner, limit: values.limit === undefined ? undefined : Number(values.limit), timeoutMs: values['timeout-ms'] === undefined ? undefined : Number(values['timeout-ms']) });
+    const { values } = parseArgs({ options: { query: { type: 'string' }, owner: { type: 'string' }, limit: { type: 'string' }, 'timeout-ms': { type: 'string' }, proxy: { type: 'string' } } });
+    const options = validateSearch({ query: values.query, owner: values.owner, limit: values.limit === undefined ? undefined : Number(values.limit), timeoutMs: values['timeout-ms'] === undefined ? undefined : Number(values['timeout-ms']) });
+    restore = configureCliProxy(values.proxy ?? process.env.ASR_HTTPS_PROXY);
+    const result = await searchRemoteSkills(options);
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) { process.stderr.write(`${JSON.stringify({ error: error.message })}\n`); process.exitCode = 1; }
+  finally { restore(); }
 }

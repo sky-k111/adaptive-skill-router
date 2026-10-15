@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { scanSkills, discoverLocalSkills, searchRemoteSkills } from '../dist/index.js';
+import { configureCliProxy } from '../skills/adaptive-workflow/scripts/search-skills.mjs';
+import * as http from 'node:http';
 import { sandbox, skill, put, options } from './helpers.mjs';
 
 const row = (source = 'example/skills', slug = 'browser-tests', extra = {}) => ({
@@ -127,14 +129,36 @@ test('response sizes are bounded even without a content-length header', async ()
   }
 });
 
-test('network errors and timeouts are bounded, observable and never retried automatically', async () => {
+test('connection retries are bounded and observable while the total timeout is retained', async () => {
   let calls = 0;
   await assert.rejects(searchRemoteSkills({ query: 'browser' }, async () => { calls++; throw new TypeError('PRIVATE_NETWORK_DETAILS'); }), /network request failed/);
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
+  calls = 0;
+  const recovered = await searchRemoteSkills({ query: 'browser' }, async () => {
+    if (++calls === 1) throw new TypeError('connection reset');
+    return response([row()]);
+  });
+  assert.equal(calls, 2);
+  assert.equal(recovered.candidates.length, 1);
+  assert.equal(recovered.diagnostics[0].code, 'registry-connection-retried');
   await assert.rejects(searchRemoteSkills({ query: 'browser', timeoutMs: 100 }, async (_url, { signal }) => new Promise((_resolve, reject) => {
     signal.addEventListener('abort', () => reject(signal.reason), { once: true });
   })), /timed out/);
   await assert.rejects(searchRemoteSkills({ query: 'browser', timeoutMs: 100 }, async (_url, { signal }) => new Response(new ReadableStream({ start(controller) {
     signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
   } }))), /timed out/);
+});
+
+test('explicit proxy configuration rejects unsafe or credential-bearing URLs without leaking them', () => {
+  for (const proxy of ['', 'socks5://proxy:1', 'http://user:PRIVATE@proxy:1', 'http://proxy/path', 'http://proxy/?token=PRIVATE', 'http://proxy/#PRIVATE', '\nhttp://proxy:1']) {
+    assert.throws(() => configureCliProxy(proxy), error => { assert.doesNotMatch(error.message, /PRIVATE/); return true; });
+  }
+  assert.equal(typeof configureCliProxy(), 'function');
+  if (typeof http.setGlobalProxyFromEnv === 'function') {
+    const original = http.default.globalAgent;
+    const restore = configureCliProxy('http://127.0.0.1:1');
+    try { assert.notEqual(http.default.globalAgent, original); }
+    finally { restore(); }
+    assert.equal(http.default.globalAgent, original);
+  } else assert.throws(() => configureCliProxy('http://127.0.0.1:1'), /Node.js 24.14/);
 });
