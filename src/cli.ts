@@ -8,18 +8,20 @@ import { planIntegration, writeIntegration } from './integration.js';
 import { scanNativeSkills } from './native.js';
 import { discoverLocalSkills, searchRemoteSkills, validateSearch } from './discovery.js';
 import { configureCliProxy } from '../skills/adaptive-workflow/scripts/search-skills.mjs';
+import { collectSkillSource, validateSource } from '../skills/adaptive-workflow/scripts/collect-source.mjs';
 import type { ScanOptions, Root } from './types.js';
 
 const HELP = `Adaptive Skill Router 0.1.0 — Codex, explore first.
 
   asr scan [--cwd PATH] [--root PATH] [--include-plugin-cache] [--json]
-  asr discover "CAPABILITY KEYWORDS" [--online] [--owner OWNER] [--proxy URL] [--limit 5] [--json]
+  asr discover "CAPABILITY KEYWORDS" [--online] [--owner OWNER] [--require TERM] [--exclude TERM] [--proxy URL] [--limit 5] [--json]
+  asr source OWNER/REPO --path PATH/TO/SKILL.md [--ref COMMIT] [--include PATH] [--proxy URL] [--json]
   asr route "TASK" [--evidence FILE] [--skill ID] [--limit 5] [--json]
   asr route --task-file FILE [--evidence FILE] [--json]
   asr inspect ID [--expect INSPECTION_FINGERPRINT] [--json]
   asr init [--cwd PATH] [--write] [--json]
 
-Common: --root PATH (repeatable), --no-defaults (only explicit roots), --cwd PATH.
+Common: --cwd PATH, --json. Catalog roots: --root PATH (repeatable), --no-defaults.
 Native discovery: --native [--codex-bin PATH] queries Codex's skills/list API.
 init previews project-local integration; --write appends a managed AGENTS.md block
 and writes a project router skill, backing up changed files. No global hooks.
@@ -28,6 +30,41 @@ route requires exploration evidence to recommend methods. It never executes skil
 discover searches local metadata; --online also sends only the query to skills.sh.
 Remote results remain unverified candidates. No installation or execution occurs.
 `;
+
+async function configuredProxy(cwd: string, explicit?: string): Promise<string | undefined> {
+  const proxy = explicit ?? process.env.ASR_HTTPS_PROXY;
+  if (proxy !== undefined) return proxy;
+  const settings = resolve(cwd, '.adaptive-skill-router/local-settings.json');
+  try {
+    if ((await stat(settings)).size > 4096) throw new Error('Local settings exceed the size limit.');
+    const local = JSON.parse(await readFile(settings, 'utf8'));
+    if (!local || typeof local !== 'object' || Array.isArray(local)) throw new Error('Local settings must be an object.');
+    return local.registryProxy;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw new Error('Invalid local registry settings; review .adaptive-skill-router/local-settings.json.');
+  }
+}
+
+function validateOptionScopes(command: string, values: Record<string, unknown>): void {
+  const catalog = ['scan', 'discover', 'route', 'inspect'];
+  const scopes: Record<string, readonly string[]> = {
+    write: ['init'], evidence: ['route'], skill: ['route'], 'task-file': ['route'],
+    limit: ['route', 'discover'], native: catalog, 'codex-bin': catalog, root: catalog,
+    'no-defaults': catalog, 'include-plugin-cache': catalog,
+    online: ['discover'], owner: ['discover'], require: ['discover'], exclude: ['discover'],
+    path: ['source'], ref: ['source'], include: ['source'], expect: ['inspect'],
+    proxy: ['discover', 'source']
+  };
+  for (const [option, commands] of Object.entries(scopes)) {
+    // Presence matters: even an empty string is an explicitly supplied option.
+    if (values[option] !== undefined && !commands.includes(command)) {
+      const context = command === 'source' ? ' source accepts source-specific options.' : '';
+      throw new Error(`--${option} is supported only by ${commands.join(', ')}. Remove it from ${command}.${context}`);
+    }
+  }
+  if (values['codex-bin'] !== undefined && !values.native) throw new Error('--codex-bin requires --native. Add --native or remove --codex-bin.');
+}
 
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -39,15 +76,31 @@ async function main() {
     help: { type: 'boolean', short: 'h' }, version: { type: 'boolean' },
     native: { type: 'boolean' }, 'codex-bin': { type: 'string' },
     online: { type: 'boolean' }, owner: { type: 'string' }, proxy: { type: 'string' },
-    expect: { type: 'string' }
+    expect: { type: 'string' }, require: { type: 'string', multiple: true }, exclude: { type: 'string', multiple: true },
+    path: { type: 'string' }, ref: { type: 'string' }, include: { type: 'string', multiple: true }
   } });
   if (values.version) { console.log('0.1.0'); return; }
   const [command, ...args] = positionals;
   if (values.help || !command) { console.log(HELP); return; }
   const cwd = resolve(values.cwd ?? process.cwd());
   const output = (data: unknown, human: string) => console.log(values.json ? JSON.stringify(data, null, 2) : human);
-  if ((values.online || values.owner !== undefined || values.proxy !== undefined) && command !== 'discover') throw new Error('--online, --owner and --proxy are supported only by discover.');
+  if ((values.online || values.owner !== undefined) && command !== 'discover') throw new Error('--online and --owner are supported only by discover.');
+  if (values.proxy !== undefined && !['discover', 'source'].includes(command)) throw new Error('--proxy is supported only by discover and source.');
+  if ((values.require || values.exclude) && command !== 'discover') throw new Error('--require and --exclude are supported only by discover.');
+  if ((values.path !== undefined || values.ref !== undefined || values.include) && command !== 'source') throw new Error('--path, --ref and --include are supported only by source.');
   if (values.expect !== undefined && (command !== 'inspect' || !/^[a-f0-9]{64}$/.test(values.expect))) throw new Error('--expect requires an inspectionFingerprint (64 lowercase hex characters) and is supported only by inspect.');
+  validateOptionScopes(command, values);
+  if (command === 'source') {
+    if (args.length !== 1 || values.native || values.root || values['no-defaults'] || values.evidence || values.skill || values['task-file'] || values.write || values['include-plugin-cache'] || values.limit) throw new Error('source requires one repository and source-specific options, not catalog, routing or installation options.');
+    const options = validateSource({ source: args[0]!, path: values.path, ref: values.ref, include: values.include });
+    const restore = configureCliProxy(await configuredProxy(cwd, values.proxy));
+    try {
+      const result = await collectSkillSource(options);
+      output(result, JSON.stringify(result, null, 2));
+      if (result.status !== 'complete') process.exitCode = 2;
+    } finally { restore(); }
+    return;
+  }
   if (command === 'init') {
     if (args.length) throw new Error('init takes no positional arguments.');
     const plans = await planIntegration(cwd);
@@ -69,7 +122,7 @@ async function main() {
     if (values.proxy !== undefined && !values.online) throw new Error('--proxy requires --online.');
     query = args.join(' ');
     // Validate before accessing local files, starting native discovery or networking.
-    query = validateSearch({ query, owner: values.owner, limit }).query;
+    query = validateSearch({ query, owner: values.owner, limit, requiredTerms: values.require, excludedTerms: values.exclude }).query;
   }
   if (command === 'route') {
     if (values['task-file'] !== undefined && args.length) throw new Error('Choose a positional task or --task-file, not both.');
@@ -84,23 +137,14 @@ async function main() {
   if (values.native && (values.root?.length || values['no-defaults'] || values['include-plugin-cache'])) throw new Error('--native uses the Codex runtime catalog; do not combine it with disk root options.');
   const catalog = values.native ? await scanNativeSkills({ ...options, binary: values['codex-bin'] }) : await scanSkills(options);
   if (command === 'discover') {
-    const local = discoverLocalSkills(query, catalog, limit);
+    const constraints = { requiredTerms: values.require, excludedTerms: values.exclude };
+    const local = discoverLocalSkills(query, catalog, limit, constraints);
     let remote;
     if (values.online) {
       let restore = () => {};
       try {
-        let proxy = values.proxy ?? process.env.ASR_HTTPS_PROXY;
-        if (proxy === undefined) {
-          const settings = resolve(cwd, '.adaptive-skill-router/local-settings.json');
-          try {
-            if ((await stat(settings)).size > 4096) throw new Error('Local settings exceed the size limit.');
-            const local = JSON.parse(await readFile(settings, 'utf8'));
-            if (!local || typeof local !== 'object' || Array.isArray(local)) throw new Error('Local settings must be an object.');
-            proxy = local.registryProxy;
-          } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('Invalid local registry settings; review .adaptive-skill-router/local-settings.json.'); }
-        }
-        restore = configureCliProxy(proxy);
-        remote = { status: 'ok', ...await searchRemoteSkills({ query, owner: values.owner, limit }) };
+        restore = configureCliProxy(await configuredProxy(cwd, values.proxy));
+        remote = { status: 'ok', ...await searchRemoteSkills({ query, owner: values.owner, limit, ...constraints }) };
       }
       catch (error) {
         remote = { status: 'failed', candidates: [], error: (error as Error).message };

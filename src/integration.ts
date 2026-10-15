@@ -40,7 +40,9 @@ export async function planIntegration(cwd: string): Promise<IntegrationPlan[]> {
   const scriptResources = await Promise.all([
     ['check-evidence.mjs', '// Adaptive Workflow evidence record.'],
     ['search-skills.mjs', '// Adaptive Workflow remote skill discovery.'],
-    ['search-skills.d.mts', '// Adaptive Workflow remote discovery types.']
+    ['search-skills.d.mts', '// Adaptive Workflow remote discovery types.'],
+    ['collect-source.mjs', '// Adaptive Workflow source collection.'],
+    ['collect-source.d.mts', '// Adaptive Workflow source collection types.']
   ].map(async ([name, marker]) => ({
     path: join(root, '.agents', 'skills', 'adaptive-skill-router', 'scripts', name!),
     source: await readFile(new URL(`../skills/adaptive-workflow/scripts/${name}`, import.meta.url), 'utf8'), marker: marker!

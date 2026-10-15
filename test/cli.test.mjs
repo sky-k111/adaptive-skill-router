@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { readFile, readdir } from 'node:fs/promises';
 import * as http from 'node:http';
+import { createHash } from 'node:crypto';
 import { sandbox, put, skill, evidence } from './helpers.mjs';
 const run = promisify(execFile);
 const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
@@ -248,4 +249,50 @@ test('CLI binds discovery to inspection and refuses changed instructions or invo
     // Without --expect, inspect deliberately reads the latest discovered version.
     assert.equal(JSON.parse((await invoke(root, ['inspect', fresh.id, ...common])).stdout).skill.inspectionFingerprint, fresh.inspectionFingerprint);
   });
+});
+
+test('CLI discovery constraints and the standalone helper keep the same filtered identities', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'library/mobile', 'mobile-cli', 'Capacitor deployment');
+  await skill(root, 'library/node', 'node-cli', 'Node.js testing');
+  const bootstrap = await put(root, 'transport.mjs', `globalThis.fetch = async () => Response.json({skills: [{id:'example/library/capacitor-cli',source:'example/library',name:'capacitor-cli'}, {id:'example/library/node-cli',source:'example/library',name:'node-cli'}]});`);
+  const flags = ['--query', 'node cli', '--exclude', 'capacitor'];
+  const helper = fileURLToPath(new URL('../skills/adaptive-workflow/scripts/search-skills.mjs', import.meta.url));
+  const helperResult = JSON.parse((await run(process.execPath, ['--import', pathToFileURL(bootstrap).href, helper, ...flags], { cwd: root, windowsHide: true })).stdout);
+  const result = JSON.parse((await run(process.execPath, ['--import', pathToFileURL(bootstrap).href, cli, 'discover', 'node cli', '--exclude', 'capacitor', '--online', '--no-defaults', '--root', join(root, 'library'), '--cwd', root, '--json'], { windowsHide: true })).stdout);
+  assert.deepEqual(result.local.map(s => s.name), ['node-cli']);
+  assert.deepEqual(result.remote.candidates, helperResult.candidates);
+  assert.equal(result.remote.filteredCandidates[0].slug, 'capacitor-cli');
+  await assert.rejects(invoke(root, ['discover', 'node', '--exclude', '\nprivate', '--native', '--codex-bin', 'must-not-start']), error => /Constraints/.test(error.stderr) && !/Unable to start/.test(error.stderr));
+});
+
+test('CLI and standalone source collection agree, report incomplete material and make no installation writes', async t => {
+  const root = await sandbox(t), commit = 'a'.repeat(40), tree = 'b'.repeat(40);
+  const contents = { 'skill/SKILL.md': '[Required reference](missing.md)', LICENSE: 'Example license' };
+  const entries = [], blobs = {};
+  for (const [path, content] of Object.entries(contents)) {
+    const bytes = Buffer.from(content), sha = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])).digest('hex');
+    entries.push({path, type:'blob', mode:'100644', size:bytes.length, sha});
+    blobs[sha] = { sha, encoding:'base64', size:bytes.length, content:bytes.toString('base64') };
+  }
+  const bootstrap = await put(root, 'transport.mjs', `const entries=${JSON.stringify(entries)}, blobs=${JSON.stringify(blobs)}; globalThis.fetch=async url => Response.json(String(url).includes('/commits/') ? {sha:'${commit}',commit:{tree:{sha:'${tree}'}}} : String(url).includes('/git/trees/') ? {sha:'${tree}',truncated:false,tree:entries} : blobs[String(url).split('/').at(-1)]);`);
+  const helper = fileURLToPath(new URL('../skills/adaptive-workflow/scripts/collect-source.mjs', import.meta.url));
+  const before = (await readdir(root)).sort();
+  const results = [];
+  for (const args of [[helper, '--source', 'example/library', '--path', 'skill/SKILL.md'], [cli, 'source', 'example/library', '--path', 'skill/SKILL.md', '--cwd', root, '--json']]) {
+    await assert.rejects(run(process.execPath, ['--import', pathToFileURL(bootstrap).href, ...args], { cwd: root, windowsHide: true }), error => {
+      assert.equal(error.code, 2);
+      const result = JSON.parse(error.stdout);
+      assert.equal(result.status, 'incomplete');
+      assert.equal(result.reviewStatus, 'not-reviewed');
+      assert.equal(result.commit, commit);
+      assert.ok(result.unresolved.some(item => item.path === 'skill/missing.md'));
+      results.push(result);
+      return true;
+    });
+  }
+  assert.deepEqual(results[0], results[1]);
+  assert.deepEqual((await readdir(root)).sort(), before);
+  await assert.rejects(invoke(root, ['source', 'example/library', '--path', '../SKILL.md']), error => /repository-relative/.test(error.stderr));
+  await assert.rejects(invoke(root, ['source', 'example/library', '--path', 'skill/SKILL.md', '--native']), error => /source-specific/.test(error.stderr));
 });

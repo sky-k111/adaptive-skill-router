@@ -27,6 +27,7 @@ Run from this checkout or use an absolute CLI path. Generated guidance binds tha
 | `scan --native` | Read the catalog of a fresh local Codex app-server process |
 | `discover "capability keywords"` | Search local metadata, retaining exact identities and invocation constraints |
 | `discover "capability keywords" --online` | Also retrieve unverified GitHub-source candidates from skills.sh |
+| `source owner/repository --path exact/SKILL.md --ref commit` | Collect pinned source material; leave semantic review to the host |
 | `route --task-file task.txt --evidence evidence.json` | Suggest a next approach and relevant capability candidates |
 | `inspect <id> --expect <inspectionFingerprint>` | Read the selected entry only if its manifest identity, instructions and invocation metadata still match |
 | `init` / `init --write` | Preview / apply project-local integration |
@@ -54,6 +55,8 @@ These checks cover entry instructions and invocation metadata, not every referen
 ## Local and external capability discovery
 
 `discover` is an inventory query, separate from evidence-based method routing. It returns local name/description matches even when heuristic method classification would not shortlist them. Candidate, explicit-only, unverified-plugin and disabled states remain distinct, with eligible candidates first. A `candidate` still requires source inspection and actual host availability. English token and Chinese bigram matching is lexical; the host may need an equivalent query in the description's language.
+
+Query-term coverage ranks matches before title overlap, with local eligibility remaining the first ordering key. Remote results retain `providerRank`; ties preserve that order, and installs never affect the score. The reranker sees only the bounded returned names, not complete source contents or the whole registry. Repeatable `--require TERM` and `--exclude TERM` apply explicit token constraints locally; remote filtered entries retain `missingRequiredTerms` / `matchedExcludedTerms` in `filteredCandidates`. Constraints are not sent to the provider, and an empty constrained result is not proof that no suitable skill exists. The equivalent standalone helper accepts the same constraints. Use [pinned source collection](source-review.md) to obtain material for actual semantic review.
 
 Without `--online`, discovery makes no registry request. With `--online`, only the explicit capability query (2–160 characters), optional GitHub owner and result limit (1–20, default 5) are sent to skills.sh. Do not pass private task contents as the query. The search helper reads no project files and forwards no project credentials. A connection failure may be retried once within the same eight-second default deadline; HTTP errors, schema failures and exhausted timeouts are not retried. A successful recovery includes a retry diagnostic. The response limit is 512 KiB, and redirects are restricted to the registry's HTTPS origins. No repository is cloned and no package manager is started.
 

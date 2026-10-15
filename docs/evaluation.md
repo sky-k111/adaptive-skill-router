@@ -4,6 +4,8 @@
 
 ## Current checks
 
+The latest [discovery tooling and actual maintenance comparison](discovery-validation-2026-10-15.md) ([中文](discovery-validation-2026-10-15.zh-CN.md)) records live source collection, explainable reranking, 140 passing local implementation tests and an eight-session comparison. Both arms accepted 4/4; Adaptive used 24.1% more uncached input in that sample. No reliable quality or cost advantage was established.
+
 Implementation tests cover malformed metadata, aliases and Unicode, duplicate names, symlink/junction loops, invocation restrictions, disabled configuration, cache uncertainty, source changes, exploration-first routing, evidence binding, explicit choices, safe previews, backups and idempotent integration. Some systems cannot create file symlinks; that check explicitly reports a skip while directory-link checks can still run.
 
 The ten policy scenarios include a clear bug, a large mechanical edit, an unknown root cause, missing regression coverage, interfaces spanning modules, a high-consequence one-line change, a business unknown, unknown scope, and de-escalation after resolution. Fixtures offer narrow debugging/testing/planning methods and a deliberately overbroad workflow. A broad trigger alone never creates a method gap or final selection; matched broad candidates retain an advisory for the host.

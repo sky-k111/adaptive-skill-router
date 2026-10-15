@@ -10,6 +10,7 @@ Use the project bindings in the generated entry. Otherwise use a known installed
 asr scan --cwd <project-root> --json
 asr discover "capability keywords" --cwd <project-root> --json
 asr discover "capability keywords" --online --owner <github-owner> --cwd <project-root> --json
+asr source <owner/repository> --path <exact/SKILL.md> --ref <commit> --cwd <project-root> --json
 asr route --task-file <task.txt> --evidence <evidence.json> --cwd <project-root> --json
 asr inspect <exact-id> --expect <inspectionFingerprint> --cwd <project-root> --json
 ```
@@ -21,6 +22,8 @@ Pass arguments through the host tool with its shell quoting rules; do not interp
 When inspecting an earlier local candidate, pass its `inspectionFingerprint` from scan/discover/route with the same roots and mode. Changed entry instructions, invocation metadata or resolved paths cause failure; rediscover before reviewing the new version. Omitting `--expect` reads the latest scan. The token covers `SKILL.md` and optional `agents/openai.yaml`, not supporting scripts/documents or current host permissions.
 
 `discover` searches local names and descriptions without task evidence or method classification; it does not select skills. Local matches retain invocation restrictions and exact identities. `--online` also sends only the explicit capability keywords, optional owner and result limit to skills.sh. Do not send project contents or sensitive task descriptions. Online candidates remain separate and unverified; follow [capability selection](capability-selection.md) to review exact source instructions and prerequisites. Without `--online`, no registry request is made. Remote failure retains local results, sets `remote.status` to `failed` and exits 2; it is not a successful empty search. Offline and successful online discovery exit 0; invalid input and local discovery errors exit 1.
+
+Discovery accepts repeatable `--require` / `--exclude` metadata terms and reports lexical coverage. These do not establish semantic fit. `source` explicitly collects bounded source files at one commit; incomplete collection exits 2 with per-file reasons. Its `reviewStatus` remains `not-reviewed`: the host still assesses prerequisites, license applicability and the actual contribution. It never installs or executes collected scripts.
 
 ## Task-bound evidence
 

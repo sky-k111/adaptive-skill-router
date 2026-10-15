@@ -11,6 +11,38 @@ const REPO = /^[a-z0-9][a-z0-9._-]{0,99}$/i;
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
 const CONTROL = /[\p{Cc}\p{Cf}]/u;
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const STOP_WORDS = new Set('a an and are as at be been before by can do for from has have if in is it its of on or our that the their then these this to use used using was we when where which with you your'.split(' '));
+
+export function metadataTokens(text) {
+  const normalized = text.toLowerCase().replace(/\bnode(?:\.js|js)\b/g, 'node');
+  const words = normalized.match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? [];
+  const out = new Set(words.flatMap(word => [word, ...word.split('-')]).filter(word => !STOP_WORDS.has(word)));
+  for (const group of normalized.match(/[\p{Script=Han}]+/gu) ?? []) {
+    if (group.length === 1) out.add(group);
+    for (let i = 0; i < group.length - 1; i++) out.add(group.slice(i, i + 2));
+  }
+  return out;
+}
+
+export function validateConstraints({ requiredTerms = [], excludedTerms = [] } = {}) {
+  for (const terms of [requiredTerms, excludedTerms]) {
+    if (!Array.isArray(terms) || terms.length > 8 || terms.some(term => typeof term !== 'string' || !term.trim() || term.length > 80 || CONTROL.test(term) || !metadataTokens(term).size)) throw new Error('Constraints must be arrays of up to eight non-empty capability terms (80 characters each).');
+  }
+  return { requiredTerms: [...new Set(requiredTerms.map(s => s.trim()))], excludedTerms: [...new Set(excludedTerms.map(s => s.trim()))] };
+}
+
+export function relevanceSignals(query, name, description = '', constraints = {}) {
+  const { requiredTerms, excludedTerms } = validateConstraints(constraints);
+  const tokens = metadataTokens(query), title = metadataTokens(name), text = metadataTokens(`${name} ${description}`);
+  const matchedTerms = [...tokens].filter(term => text.has(term));
+  const matches = term => [...metadataTokens(term)].every(word => text.has(word));
+  const missingRequiredTerms = requiredTerms.filter(term => !matches(term));
+  const matchedExcludedTerms = excludedTerms.filter(matches);
+  const queryCoverage = tokens.size ? matchedTerms.length / tokens.size : 0;
+  return { matchedTerms, queryCoverage, missingRequiredTerms, matchedExcludedTerms,
+    retrievalScore: Math.round(queryCoverage * 1000) + matchedTerms.filter(term => title.has(term)).length,
+    matchesConstraints: !missingRequiredTerms.length && !matchedExcludedTerms.length };
+}
 
 // CLI entry points only: do not implicitly replace a library caller's dispatcher.
 export function configureCliProxy(proxy) {
@@ -22,19 +54,22 @@ export function configureCliProxy(proxy) {
   return http.setGlobalProxyFromEnv({ HTTP_PROXY: url.href, HTTPS_PROXY: url.href });
 }
 
-export function validateSearch({ query, owner, limit = 5, timeoutMs = 8000 } = {}) {
+export function validateSearch({ query, owner, limit = 5, timeoutMs = 8000, requiredTerms, excludedTerms } = {}) {
   if (typeof query !== 'string' || CONTROL.test(query)) throw new Error('Search query must be plain text without control characters.');
   query = query.trim().replace(/\s+/gu, ' ');
   if (query.length < 2 || query.length > 160) throw new Error('Search query must contain 2 to 160 characters; use capability keywords, not project contents.');
   if (owner !== undefined && (typeof owner !== 'string' || !OWNER.test(owner))) throw new Error('Owner must be a valid GitHub owner.');
   if (!Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error('Candidate limit must be an integer between 1 and 20.');
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 30000) throw new Error('Search timeout must be an integer between 100 and 30000 milliseconds.');
-  return { query, owner: owner?.toLowerCase(), limit, timeoutMs };
+  return { query, owner: owner?.toLowerCase(), limit, timeoutMs, ...validateConstraints({ requiredTerms, excludedTerms }) };
 }
 
 async function readResponse(response) {
   const declared = Number(response.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > MAX_BYTES) throw new Error('Registry response exceeds the size limit.');
+  if (Number.isFinite(declared) && declared > MAX_BYTES) {
+    await response.body?.cancel().catch(() => {});
+    throw new Error('Registry response exceeds the size limit.');
+  }
   if (!response.body) throw new Error('Registry returned no response body.');
   const chunks = [];
   let size = 0;
@@ -56,7 +91,7 @@ async function readResponse(response) {
 }
 
 export async function searchRemoteSkills(options = {}, transport = globalThis.fetch) {
-  const { query, owner, limit, timeoutMs } = validateSearch(options);
+  const { query, owner, limit, timeoutMs, requiredTerms, excludedTerms } = validateSearch(options);
   const endpoint = new URL('https://skills.sh/api/search');
   endpoint.search = new URLSearchParams({ q: query, limit: String(limit), ...(owner ? { owner } : {}) }).toString();
   const controller = new AbortController();
@@ -92,7 +127,7 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
     const candidates = [];
     const seen = new Set();
     let excluded = 0;
-    for (const row of payload.skills) {
+    for (const [providerIndex, row] of payload.skills.entries()) {
       if (!object(row) || typeof row.source !== 'string' || typeof row.id !== 'string' || typeof row.name !== 'string') { excluded++; continue; }
       const [author, repo, ...extra] = row.source.split('/');
       const slug = row.id.startsWith(`${row.source}/`) ? row.id.slice(row.source.length + 1) : '';
@@ -107,18 +142,22 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
         repositoryUrl: `https://github.com/${row.source}`,
         installs: Number.isSafeInteger(row.installs) && row.installs >= 0 ? row.installs : null,
         availability: 'remote-unverified',
+        providerRank: providerIndex + 1,
+        relevance: relevanceSignals(query, row.name, '', { requiredTerms, excludedTerms }),
         advisories: ['source-and-prerequisites-unreviewed', 'host-compatibility-unverified', 'popularity-is-not-quality']
       });
     }
+    const filteredCandidates = candidates.filter(candidate => !candidate.relevance.matchesConstraints);
+    const ranked = candidates.filter(candidate => candidate.relevance.matchesConstraints).sort((a, b) => b.relevance.retrievalScore - a.relevance.retrievalScore || a.providerRank - b.providerRank);
     return {
       schemaVersion: 1, provider: 'skills.sh', query, ...(owner ? { owner } : {}),
-      fetchedAt: new Date().toISOString(), candidates,
+      fetchedAt: new Date().toISOString(), candidates: ranked, filteredCandidates,
       diagnostics: [
         ...(excluded ? [{ code: 'registry-entries-excluded', message: `${excluded} malformed, duplicate or out-of-scope entries excluded.` }] : []),
         ...(connectionRetries ? [{ code: 'registry-connection-retried', message: 'One failed connection attempt was retried within the original timeout.' }] : [])
       ],
       selectedSkills: [],
-      limitation: 'Untrusted registry metadata only. Provider order and install counts do not prove suitability or safety. Review exact source instructions, dependencies and host availability before selection; discovery never installs or executes.'
+      limitation: 'Lexical reranking of this bounded registry response, not semantic selection. Constraints apply only to supplied metadata; low overlap is not proof of irrelevance. Popularity is not quality. Review source instructions, dependencies and host availability; nothing is installed or executed.'
     };
   } catch (error) {
     if (controller.signal.aborted) throw new Error('Registry search timed out; the total deadline was exhausted.');
@@ -130,8 +169,8 @@ export async function searchRemoteSkills(options = {}, transport = globalThis.fe
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   let restore = () => {};
   try {
-    const { values } = parseArgs({ options: { query: { type: 'string' }, owner: { type: 'string' }, limit: { type: 'string' }, 'timeout-ms': { type: 'string' }, proxy: { type: 'string' } } });
-    const options = validateSearch({ query: values.query, owner: values.owner, limit: values.limit === undefined ? undefined : Number(values.limit), timeoutMs: values['timeout-ms'] === undefined ? undefined : Number(values['timeout-ms']) });
+    const { values } = parseArgs({ options: { query: { type: 'string' }, owner: { type: 'string' }, limit: { type: 'string' }, 'timeout-ms': { type: 'string' }, proxy: { type: 'string' }, require: { type: 'string', multiple: true }, exclude: { type: 'string', multiple: true } } });
+    const options = validateSearch({ query: values.query, owner: values.owner, limit: values.limit === undefined ? undefined : Number(values.limit), timeoutMs: values['timeout-ms'] === undefined ? undefined : Number(values['timeout-ms']), requiredTerms: values.require, excludedTerms: values.exclude });
     restore = configureCliProxy(values.proxy ?? process.env.ASR_HTTPS_PROXY);
     const result = await searchRemoteSkills(options);
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

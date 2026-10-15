@@ -61,6 +61,33 @@ test('remote search encodes only capability keywords and returns source-bound, u
   assert.ok(!('installCommand' in result.candidates[0]));
 });
 
+test('remote reranking uses query coverage rather than popularity and exposes explicit exclusions', async () => {
+  const rows = [row('cap-go/capgo-skills', 'capacitor-ci-cd', { installs: 999999 }), row('lirantal/nodejs-cli-apps-best-practices', 'nodejs-cli-best-practices', { installs: 1 }), row('ccusage/ccusage', 'testing')];
+  const result = await searchRemoteSkills({ query: 'node cli testing' }, async () => response(rows));
+  assert.equal(result.candidates[0].source, 'lirantal/nodejs-cli-apps-best-practices');
+  assert.equal(result.candidates[0].providerRank, 2);
+  assert.deepEqual(result.candidates[0].relevance.matchedTerms, ['node', 'cli']);
+  const filtered = await searchRemoteSkills({ query: 'node cli testing', requiredTerms: ['cli'], excludedTerms: ['capacitor'] }, async url => {
+    assert.ok(!String(url).includes('exclude'));
+    return response(rows);
+  });
+  assert.equal(filtered.candidates.length, 1);
+  assert.equal(filtered.filteredCandidates.length, 2);
+  assert.ok(filtered.filteredCandidates.find(s => s.slug === 'capacitor-ci-cd').relevance.matchedExcludedTerms.includes('capacitor'));
+  assert.deepEqual(filtered.selectedSkills, []);
+});
+
+test('local constraints preserve eligibility and do not treat a lexical miss as semantic rejection', async t => {
+  const root = await sandbox(t);
+  await skill(root, 'cli', 'node-cli', 'Test Node.js command behavior');
+  await skill(root, 'mobile', 'mobile-cli', 'Test Capacitor delivery');
+  const catalog = await scanSkills(options(root));
+  const matches = discoverLocalSkills('node cli testing', catalog, 5, { excludedTerms: ['capacitor'] });
+  assert.deepEqual(matches.map(s => s.name), ['node-cli']);
+  assert.equal(matches[0].relevance.queryCoverage, 2 / 3);
+  assert.throws(() => discoverLocalSkills('node', catalog, 5, { requiredTerms: ['\nprivate'] }), /Constraints/);
+});
+
 test('malicious, inconsistent, duplicate and out-of-owner rows do not become remote candidates', async () => {
   const result = await searchRemoteSkills({ query: 'browser', owner: 'example', limit: 2 }, async () => response([
     null, row('example/skills', 'browser-tests', { id: 'attacker/other/browser-tests' }),

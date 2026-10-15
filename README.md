@@ -6,9 +6,9 @@
 
 Adaptive Workflow helps Codex decide how to approach software development work after inspecting the relevant code, reported behavior and existing checks. It keeps clear changes direct, introduces additional methods for demonstrated gaps, and adjusts the approach when evidence or requirements change.
 
-The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. Optional helpers support file-state checks and external skill discovery.
+The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. Optional helpers support file-state checks, explainable skill retrieval and commit-pinned source collection.
 
-Behavioral effectiveness remains experimental. Current comparative evaluations do not establish reliable superiority over default Codex or general token savings. Use the published evidence and its limitations when deciding whether this guidance fits your work.
+Behavioral effectiveness remains experimental. Current comparative evaluations do not establish reliable superiority over default Codex or general token savings. The latest [discovery validation and maintenance comparison](docs/discovery-validation-2026-10-15.md) retains both the engineering results and the negative comparison. Use the published evidence and its limitations when deciding whether this guidance fits your work.
 
 ## Core capabilities
 
@@ -78,6 +78,10 @@ node <skill-directory>/scripts/search-skills.mjs --query "browser interaction te
 ```
 
 The optional helper sends only the explicit query and optional owner/limit to skills.sh; use non-sensitive capability keywords. It does not read the project, install packages or execute discovered skills. GitHub-backed results include exact source identities and links, and remain unverified until the host reviews their actual instructions, prerequisites and compatibility. Popularity is not a quality score. Network failures, schema changes and successful empty results are distinct. See [capability selection](skills/adaptive-workflow/references/capability-selection.md) for the selection and authorization boundaries.
+
+Discovery reranks the returned metadata by query-term coverage, retains provider rank, and supports repeatable `--require` / `--exclude` constraints with explicit remote filtering reasons. Scores describe text overlap; the host determines semantic suitability.
+
+The optional `collect-source.mjs` helper gathers a candidate's instructions, invocation metadata, licenses and bounded supporting files at one commit. Missing materials remain explicit, and collection does not mark a candidate as reviewed. See [source collection](docs/source-review.md).
 
 If your network needs an existing trusted proxy, the helper supports `--proxy URL` or `ASR_HTTPS_PROXY` on Node.js 24.14+. The repository CLI also supports a private project setting. No machine-specific proxy is shipped, and certificate validation remains enabled. See [proxy setup and runtime compatibility](docs/router.md#existing-proxy-support).
 

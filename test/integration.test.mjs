@@ -12,7 +12,9 @@ const methodResources = [
   'references/continuity.md',
   'scripts/check-evidence.mjs',
   'scripts/search-skills.mjs',
-  'scripts/search-skills.d.mts'
+  'scripts/search-skills.d.mts',
+  'scripts/collect-source.mjs',
+  'scripts/collect-source.d.mts'
 ];
 const projectSkill = '.agents/skills/adaptive-skill-router';
 
