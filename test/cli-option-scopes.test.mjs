@@ -4,6 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readdir } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import * as http from 'node:http';
 import { sandbox, put } from './helpers.mjs';
 
 const run = promisify(execFile);
@@ -122,6 +123,15 @@ test('in-scope options still reach command execution with their required compani
     const result = await run(process.execPath, [
       '--import', pathToFileURL(guard).href, cli, ...args, '--cwd', root, '--json'
     ], { cwd: root, windowsHide: true }).catch(error => error);
+    if (name === 'proxy' && command === 'source' && typeof http.setGlobalProxyFromEnv !== 'function') {
+      // The option is in scope, but the supported proxy prerequisite is absent
+      // on Node 22. That rejection correctly precedes any network boundary.
+      assert.equal(result.code, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Explicit proxy support requires Node\.js 24\.14\+/);
+      assert.doesNotMatch(result.stderr, /UNEXPECTED_BOUNDARY|supported only|source-specific options/);
+      continue;
+    }
     assert.match(result.stderr, /UNEXPECTED_BOUNDARY/, args.join(' '));
     assert.doesNotMatch(result.stderr, /supported only|source-specific options/, args.join(' '));
   }
