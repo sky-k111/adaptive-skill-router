@@ -1,6 +1,6 @@
 # Optional project router
 
-The standalone workflow does not require this tool. Use the CLI when a reliable session catalog is insufficient and local discovery or structured candidate retrieval would help resolve a real method gap. It retrieves candidates; the host makes the semantic choice and controls execution.
+The standalone skill manages the use of already-installed skills and does not require this tool. Use the CLI when the current session catalog is insufficient and local inventory or structured candidate retrieval would help. It retrieves candidates; the host makes the semantic choice and controls execution. Online search and source collection are retained utilities for explicitly requested external discovery, not automatic fallbacks for an empty local result.
 
 ## Build and integrate
 
@@ -26,8 +26,8 @@ Run from this checkout or use an absolute CLI path. Generated guidance binds tha
 | `scan` | Inventory bounded disk roots, metadata, identities and invocation restrictions |
 | `scan --native` | Read the catalog of a fresh local Codex app-server process |
 | `discover "capability keywords"` | Search local metadata, retaining exact identities and invocation constraints |
-| `discover "capability keywords" --online` | Also retrieve unverified GitHub-source candidates from skills.sh |
-| `source owner/repository --path exact/SKILL.md --ref commit` | Collect pinned source material; leave semantic review to the host |
+| `discover "capability keywords" --online` | Retained external utility: retrieve unverified candidates when requested |
+| `source owner/repository --path exact/SKILL.md --ref commit` | Retained external utility: collect pinned source material when requested |
 | `route --task-file task.txt --evidence evidence.json` | Suggest a next approach and relevant capability candidates |
 | `inspect <id> --expect <inspectionFingerprint>` | Read the selected entry only if its manifest identity, instructions and invocation metadata still match |
 | `init` / `init --write` | Preview / apply project-local integration |
@@ -37,7 +37,6 @@ node dist/cli.js scan --cwd /path/to/project --json
 node dist/cli.js scan --root /path/to/library --json
 node dist/cli.js scan --native --codex-bin /trusted/path/to/codex --json
 node dist/cli.js discover "browser interaction testing" --cwd /path/to/project --json
-node dist/cli.js discover "browser interaction testing" --online --owner example --cwd /path/to/project --json
 node dist/cli.js route --task-file task.txt --evidence evidence.json --cwd /path/to/project --json
 node dist/cli.js inspect <exact-id> --expect <inspectionFingerprint> --json
 ```
@@ -52,11 +51,17 @@ Local `scan`, `discover` and `route` results include an `inspectionFingerprint`.
 
 These checks cover entry instructions and invocation metadata, not every referenced script or document, Codex configuration changes, current desktop enablement or authorization. They are not signatures, filesystem locks or an atomic snapshot. A tool or file change after reading still requires host review before use. Remote candidates have no local inspection token until an authorized local installation is discovered.
 
-## Local and external capability discovery
+## Local capability discovery
 
 `discover` is an inventory query, separate from evidence-based method routing. It returns local name/description matches even when heuristic method classification would not shortlist them. Candidate, explicit-only, unverified-plugin and disabled states remain distinct, with eligible candidates first. A `candidate` still requires source inspection and actual host availability. English token and Chinese bigram matching is lexical; the host may need an equivalent query in the description's language.
 
-Query-term coverage ranks matches before title overlap, with local eligibility remaining the first ordering key. Remote results retain `providerRank`; ties preserve that order, and installs never affect the score. The reranker sees only the bounded returned names, not complete source contents or the whole registry. Repeatable `--require TERM` and `--exclude TERM` apply explicit token constraints locally; remote filtered entries retain `missingRequiredTerms` / `matchedExcludedTerms` in `filteredCandidates`. Constraints are not sent to the provider, and an empty constrained result is not proof that no suitable skill exists. The equivalent standalone helper accepts the same constraints. Use [pinned source collection](source-review.md) to obtain material for actual semantic review.
+Query-term coverage ranks matches before title overlap, with local eligibility remaining the first ordering key. Repeatable `--require TERM` and `--exclude TERM` apply explicit metadata constraints. Constraints do not establish semantic fit, and an empty constrained result is not proof that no suitable installed skill exists. Review plausible descriptions when lexical matching is insufficient; do not automatically switch to online search.
+
+## Retained external utilities: explicit requests only
+
+The following networking and source-collection options support a separate user request to find or assess additional skills. They are not required for installed-skill selection.
+
+Remote results retain `providerRank`; ties preserve that order, and installs never affect the score. The reranker sees only bounded returned names, not complete source contents or the whole registry. Remote filtered entries retain `missingRequiredTerms` / `matchedExcludedTerms` in `filteredCandidates`; constraints are not sent to the provider. The standalone helper accepts the same constraints. Use [pinned source collection](source-review.md) to obtain material for actual semantic review.
 
 Without `--online`, discovery makes no registry request. With `--online`, only the explicit capability query (2–160 characters), optional GitHub owner and result limit (1–20, default 5) are sent to skills.sh. Do not pass private task contents as the query. The search helper reads no project files and forwards no project credentials. A connection failure may be retried once within the same eight-second default deadline; HTTP errors, schema failures and exhausted timeouts are not retried. A successful recovery includes a retry diagnostic. The response limit is 512 KiB, and redirects are restricted to the registry's HTTPS origins. No repository is cloned and no package manager is started.
 
@@ -72,7 +77,7 @@ Output keeps `local`, `remote`, catalog diagnostics and an empty `selectedSkills
 
 The adapter uses the public search endpoint used by the registry's [own CLI](https://github.com/vercel-labs/skills/blob/main/src/find.ts), rather than the separately authenticated versioned API. This external contract may change; do not silently reinterpret schema drift as no matches. Deterministic tests use controlled HTTP responses and do not establish live service availability.
 
-Review the exact source `SKILL.md`, relevant dependencies, license, host compatibility and workflow obligations before selection. Installation requires applicable user authorization; retrieval never grants it. [Capability selection](../skills/adaptive-workflow/references/capability-selection.md) describes how the host can adopt available skills and report remote installation needs. The standalone helper in that skill supports the same remote search without building this CLI.
+Review the exact source `SKILL.md`, relevant dependencies, license, host compatibility and workflow obligations before external adoption. Installation requires applicable user authorization; retrieval never grants it. [Installed skill selection](../skills/adaptive-workflow/references/capability-selection.md) defines the default local scope; [source collection](source-review.md) documents this separate external operation. The retained standalone search helper supports remote search without building this CLI.
 
 ## Discovery boundaries
 

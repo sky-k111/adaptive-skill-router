@@ -2,7 +2,9 @@
 
 This project currently supports Codex only. Preserve the distinction between candidate retrieval and the host's semantic Skill choice. Do not turn metadata descriptions or route suggestions into automatic execution or authorization.
 
-Explore relevant code and existing checks first. Clear local changes can proceed directly; use a specialized method only for an actual knowledge or method gap. The reusable guidance is in `skills/adaptive-skill-router/SKILL.md` when method selection remains uncertain. Preserve user goals and project constraints over broad third-party workflow triggers.
+The core purpose is choosing and coordinating already-installed skills. External search and source collection are retained optional utilities for explicitly requested discovery work, not default fallbacks when local selection finds no match. Keep entries, metadata, documentation and generated integration aligned with this scope.
+
+Explore relevant code and existing checks first. Clear local changes can proceed directly; use a specialized method only for an actual knowledge or method gap. The reusable guidance is in `skills/adaptive-skill-router/SKILL.md` when installed-skill selection or coordination remains uncertain. Preserve user goals and project constraints over broad third-party workflow triggers.
 
 Current priority is engineering quality of shipped capabilities. Defer new features and workflow expansion; fix reproducible defects, usability failures and compatibility gaps first. Do not start further comparisons against default Codex unless the user explicitly requests them again. Preserve existing reports as historical evidence.
 

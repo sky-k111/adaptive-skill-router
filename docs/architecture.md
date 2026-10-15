@@ -1,6 +1,8 @@
 # Architecture and boundaries
 
-The host agent explores code and existing checks, identifies an actual method gap, then retrieves candidate capabilities if useful. It can read a candidate, use only relevant methods, verify the result, and stop. Evidence updates can return it to direct execution. Running every step of this loop for every edit would defeat the purpose.
+The core skill helps the host choose and coordinate already-installed skills for a concrete task. It reuses the session catalog, reads plausible candidates as needed, resolves overlapping workflows and preserves completed work. Clear tasks can proceed directly. This is host guidance, not a global scheduler or an automatic selector.
+
+The CLI supplies optional local inventory and inspection. Remote search, source collection and file-state utilities remain available outside the primary path; an empty local result does not trigger external discovery. No commands have been removed or added as part of this scope correction.
 
 ## Components
 
@@ -16,7 +18,7 @@ There is no cloud index, embedding service, shell hook, API classifier, global i
 
 ## Operational methods and continuity evidence
 
-The standalone entry links to three conditional references. Investigation compares explanations through distinguishing checks; capability selection evaluates contribution, prerequisites and downstream costs; continuity traces the dependencies of earlier decisions and results. They guide host reasoning rather than introduce mandatory phases or automatic selection.
+The standalone entry's main reference evaluates installed candidates, prerequisites, overlap and downstream costs. Existing investigation and continuity notes remain conditional fallbacks when uncertain causes or changed evidence obstruct that selection. They are not a general development framework or required stages. External-search instructions have been removed from the selection reference; retained remote tools are documented separately in the CLI and source-collection documentation.
 
 The optional `check-evidence.mjs` helper uses Node built-ins to fingerprint explicitly selected project files. A record binds file names, resolved locations and content hashes to a canonical project root. Capture creates an exclusive local record; checks report unchanged, changed or missing files. The helper validates input, confines resolved paths to the selected root and treats record contents as data. It never executes recorded commands or asserts a test result.
 

@@ -1,47 +1,44 @@
 ---
 name: adaptive-skill-router
-description: Choose and explain a proportionate development method when relevant code exploration leaves a knowledge, debugging, planning, testing, or review gap. Discover and assess skills for a concrete capability gap. Clear bounded edits usually proceed directly.
+description: Choose and coordinate already-installed Codex skills when candidate fit, overlapping workflows or invocation cost needs judgment. Clear tasks can proceed without an additional skill. External discovery and installation are outside the default workflow.
 ---
 
 # Adaptive Skill Router
 
-Explore related code, errors and existing checks first. When the cause, scope and verification are clear, execute directly. Task size, a bug label or available Skills alone do not justify plans, documents, TDD or subagents.
+Help Codex use its installed skills appropriately for the current task: decide whether a skill helps, choose the relevant capability, coordinate overlapping instructions and stop unnecessary follow-on work. Preserve the user's requested outcome and existing authorization.
 
-## Choose a useful method
+## Scope
 
-- Unproven cause or stalled investigation: consider systematic debugging.
-- Insufficient behavior coverage: consider targeted test design.
-- Unresolved requirements or actual interface coordination: consider planning. Cross-module scope alone is insufficient.
-- Serious consequences: consider review of concrete risks.
-- Missing specialist knowledge: consider the relevant domain Skill.
+Use this guidance when the user asks how to use installed skills, several plausible skills overlap, or selecting one requires checking fit, prerequisites or downstream obligations. An explicit request to use a particular skill is a user choice to honor, subject to applicable constraints; do not silently replace it with your preferred workflow.
 
-Choose only when you can identify the gap and explain why the method's expected value warrants its added work. Using your own reasoning or choosing no Skill is valid. Resolve whether unknowns need investigation or a user's business decision; do not automatically interrupt the user.
+For a clear task that existing reasoning and tools can handle, proceed directly. Do not load this manager, scan every installed skill or introduce a plan merely to demonstrate routing. This guidance supports the host's decisions; it is not a global scheduler and does not change Codex's discovery, permissions or automatic invocation mechanism.
 
-When method selection leaves a specific operational gap, read only the relevant resource: [investigation](references/investigation.md) for competing causes, state/order failures or required compatibility left unverified by new restrictions; [capability selection](references/capability-selection.md) for uncertain candidate fit, prerequisites or invocation cost; [continuity](references/continuity.md) for uncertain evidence after a requirement change, handoff or resume. Clear changes require none of these resources.
+## Choose from what is already available
 
-## Reuse capabilities before discovering more
+Establish enough task context to identify the needed contribution and constraints. For a code repair, inspect relevant behavior and checks; for a request to list or explain installed skills, use the catalog without requiring unrelated code exploration.
 
-Use the current session's reliable Skill catalog when sufficient. No scan or route is required merely to demonstrate this workflow. Read only a plausible candidate and its relevant resources.
+Reuse the current session's catalog first. Shortlist plausible descriptions, then read the selected candidate's actual instructions and necessary supporting resources before claiming adoption. Do not load every matching body. A lexical score, familiar name or broad trigger does not establish suitability.
 
-If discovery or method choice still needs the CLI, read [CLI and evidence reference](references/routing.md). It covers trusted commands, discovery boundaries and evidence field types. Keep full inventories in a local file if needed; show only relevant candidates and diagnostics.
+Check what the candidate contributes, whether its tools and project prerequisites are available, and the work its required dependencies introduce. Keep identical names at different paths distinct. Disk presence does not establish current-session availability; respect disabled, explicit-only and unverified-cache restrictions. Reading instructions does not authorize their commands.
 
-Disk discovery does not establish current session availability. Native discovery represents a fresh CLI process. Custom roots do not register Skills. Respect disabled, explicit-only and unverified-cache restrictions.
+When fit or overlap remains uncertain, read [installed skill selection](references/capability-selection.md). Choose no additional skill when existing capabilities suffice or no available candidate fits. A missing candidate is not a reason to start an online search, install dependencies or modify other skills. Report a material limitation and continue with an available approach; external discovery requires a user request covering that work.
 
-Before adopting a candidate, check its required tools, scripts and project setup; an installed CLI alone does not make a framework project-ready. Consider required downstream Skills, documents and coordination. User goals and project constraints govern broad third-party triggers and fixed phases. Preserve required checks; describe partial adoption honestly. Do not rewrite third-party Skills or invocation policies to resolve a conflict. Candidates and retrieval scores do not authorize execution.
+## Coordinate the selected skills
 
-## Make the work understandable in conversation
+Prefer a candidate that directly supplies the needed contribution. When candidates overlap, compare their actual outputs, prerequisites and required downstream work rather than selecting all matches. Multiple skills are appropriate only for distinct contributions or a necessary dependency; connect their outputs instead of repeating investigation, planning or review already completed.
 
-Use brief, natural progress messages in the user's language at meaningful decisions and milestones:
+Read required downstream instructions only when their contribution becomes relevant. Do not recursively invoke this manager because another skill mentions routing, and do not invoke both equivalent manager entries for the same decision.
 
-- After relevant exploration, connect a concrete observation or remaining gap to the chosen method, next action and behavior to verify. Bound claims to the code actually inspected. When this guidance is actually used, identify it once with that substantive decision; merely considering it is not adoption.
-- When selecting another Skill, name it and the gap it should address. Distinguish considering, preparing to read, and actually adopting it; describe the portion used honestly. If prerequisites are missing, explain the limitation and useful fallback within existing authorization.
-- When new evidence or requirements invalidate a decision, state what changed, which work remains valid and the next decisive check. When uncertainty resolves, explain the resulting smaller scope or sufficient verification rather than continuing extra phases.
-- At a meaningful result, explain what has been established and what still matters. At delivery, connect the actual change and checks to acceptance; distinguish passed, failed, incomplete and unrun verification. Do not infer that later assertions ran after an earlier failure.
+Resolve conflicts under the instruction hierarchy, explicit user choices and project constraints. Preserve required verification. If a self-contained technique can be borrowed without claiming to run a conflicting full workflow, state that limited use. Otherwise explain the incompatibility and use a viable alternative within existing authorization; do not silently skip mandatory requirements or rewrite the candidate's policy.
 
-Show these facts as work happens, not only in a retrospective report. Clear small edits need only a short action/result update; do not load this Skill just to produce one. These are useful occasions, not required stages or a fixed message count. Combine updates when appropriate. Avoid repeated workflow banners, tool-by-tool narration, scoring, inventories and optional reports merely to display activity. Never invent a gap, Skill invocation, whole-project audit or benefit claim to make the workflow noticeable. Explanations do not create approval gates; continue authorized work.
+## Explain a material choice and reassess when needed
 
-## Adapt and finish
+In the user's language, briefly connect the task need to the chosen skill and its contribution. When this guidance actually informs a selection, identify Adaptive Skill Router once with that decision. Distinguish a candidate being considered, instructions actually read and a capability actually used. Explain an important rejection or missing prerequisite when it changes the next action; an inventory, scorecard or fixed announcement format is unnecessary.
 
-Reassess when relevant code, requirements or observations change a decision, rather than after every tool call. Reuse still-valid findings and completed work, update affected acceptance criteria, distinguish hypotheses from proven causes, and reduce extra process once uncertainty resolves.
+Reuse valid work. Reconsider the selection when the needed contribution is delivered, a prerequisite fails, or the task changes. End the additional workflow when its contribution is complete; do not continue into unrelated phases just because they appear in a skill. This does not waive required project checks or unfinished user requirements.
 
-Verify the requested behavior proportionately, obey project checks and report unrun verification. Continue within existing authorization; retain necessary approval boundaries for destructive or production operations and sensitive data/permissions. Stop when acceptance is satisfied. If the CLI is unavailable, report the limitation and apply these principles directly; do not silently install dependencies. Judge outcomes and total cost rather than completed workflow stages.
+The existing [investigation](references/investigation.md) and [continuity](references/continuity.md) notes are optional fallbacks when an unresolved cause or changed evidence prevents deciding which installed capability is useful. They are not extra stages for every task. Stop at the requested outcome and report actual verification and remaining limitations.
+
+## Optional local inventory tools
+
+If the session catalog is insufficient and local inventory or version-bound inspection would help, read [CLI and evidence reference](references/routing.md). No CLI call or evidence file is required for an otherwise clear choice.

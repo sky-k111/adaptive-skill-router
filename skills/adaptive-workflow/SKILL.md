@@ -1,81 +1,40 @@
 ---
 name: adaptive-workflow
-description: Select or revise a development method when focused exploration leaves an unresolved cause, requirement, coordination, verification, or review gap. Discover and assess additional skills for a concrete capability gap. Clear, bounded edits normally proceed directly.
+description: Choose and coordinate already-installed Codex skills when candidate fit, overlapping workflows or invocation cost needs judgment. Clear tasks can proceed without an additional skill. External discovery and installation are outside the default workflow.
 ---
 
 # Adaptive Workflow
 
-Complete the requested development work using the least process sufficient to establish correctness. Base method selection on observed gaps and consequences. Preserve the user's goal, applicable project requirements, existing authorization and valid prior work.
+Help Codex use its installed skills appropriately for the current task: decide whether a skill helps, choose the relevant capability, coordinate overlapping instructions and stop unnecessary follow-on work. Preserve the user's requested outcome and existing authorization.
 
-## Applicability and scope
+## Scope
 
-Apply this guidance to software development. A task's size, a defect label, or an available capability does not by itself justify additional workflow. Explicit invocation activates this guidance; it does not require another skill, a plan, a new test framework or delegated work.
+Use this guidance when the user asks how to use installed skills, several plausible skills overlap, or selecting one requires checking fit, prerequisites or downstream obligations. An explicit request to use a particular skill is a user choice to honor, subject to applicable constraints; do not silently replace it with your preferred workflow.
 
-Establish the requested outcome, permitted changes and relevant acceptance criteria. Do not turn optional improvements into required delivery, alter unrelated configuration, or broaden scope to accommodate a preferred method.
+For a clear task that existing reasoning and tools can handle, proceed directly. Do not load this manager, scan every installed skill or introduce a plan merely to demonstrate routing. This guidance supports the host's decisions; it is not a global scheduler and does not change Codex's discovery, permissions or automatic invocation mechanism.
 
-## Establish evidence before choosing a method
+## Choose from what is already available
 
-Inspect the relevant implementation, reported behavior and existing checks. Use a minimal reproduction when needed. Investigate unknowns that can change the next decision; a whole-repository audit is not required.
+Establish enough task context to identify the needed contribution and constraints. For a code repair, inspect relevant behavior and checks; for a request to list or explain installed skills, use the catalog without requiring unrelated code exploration.
 
-Separate observed facts, hypotheses and unresolved requirements. A passing check proves only the behavior it exercises. Do not claim that unexecuted assertions passed, including assertions skipped after an earlier failure.
+Reuse the current session's catalog first. Shortlist plausible descriptions, then read the selected candidate's actual instructions and necessary supporting resources before claiming adoption. Do not load every matching body. A lexical score, familiar name or broad trigger does not establish suitability.
 
-Proceed when the evidence establishes the cause or intended behavior, the affected boundary and a useful verification approach. Otherwise identify the specific gap before adding process. Do not substitute elapsed time, file counts or subjective confidence for evidence.
+Check what the candidate contributes, whether its tools and project prerequisites are available, and the work its required dependencies introduce. Keep identical names at different paths distinct. Disk presence does not establish current-session availability; respect disabled, explicit-only and unverified-cache restrictions. Reading instructions does not authorize their commands.
 
-## Choose the smallest sufficient method
+When fit or overlap remains uncertain, read [installed skill selection](references/capability-selection.md). Choose no additional skill when existing capabilities suffice or no available candidate fits. A missing candidate is not a reason to start an online search, install dependencies or modify other skills. Report a material limitation and continue with an available approach; external discovery requires a user request covering that work.
 
-| Established condition | Appropriate response |
-| --- | --- |
-| Behavior, cause, scope and verification are clear | Implement directly and run relevant checks |
-| A cause is unproven, behavior is intermittent, or a hypothesis fails | Reproduce, observe the relevant boundary and test a discriminating hypothesis |
-| Existing checks miss significant behavior or regression risks | Add focused behavior checks; use test-first work when it resolves the gap |
-| An unresolved requirement changes the delivered behavior | Investigate available evidence; ask for the missing business decision when necessary |
-| Actual interface coordination, dependencies or continuity require a durable record | Keep only the plan, specification or acceptance record needed to coordinate the work |
-| A change has material consequences for interfaces, permissions or data integrity | Verify the affected risks and use additional review when justified |
+## Coordinate the selected skills
 
-These are decision criteria, not sequential phases. Before adopting a method, identify the gap it addresses and consider its total cost, including required documents, tools and coordination. Continue using your own reasoning when it is sufficient.
+Prefer a candidate that directly supplies the needed contribution. When candidates overlap, compare their actual outputs, prerequisites and required downstream work rather than selecting all matches. Multiple skills are appropriate only for distinct contributions or a necessary dependency; connect their outputs instead of repeating investigation, planning or review already completed.
 
-## Load an operational method for the actual gap
+Read required downstream instructions only when their contribution becomes relevant. Do not recursively invoke this manager because another skill mentions routing, and do not invoke both equivalent manager entries for the same decision.
 
-Use these references when their trigger is observed; do not load all of them at task entry.
+Resolve conflicts under the instruction hierarchy, explicit user choices and project constraints. Preserve required verification. If a self-contained technique can be borrowed without claiming to run a conflicting full workflow, state that limited use. Otherwise explain the incompatibility and use a viable alternative within existing authorization; do not silently skip mandatory requirements or rewrite the candidate's policy.
 
-- [Investigation](references/investigation.md): competing explanations remain, a failure depends on ordering or hidden state, an attempted fix fails, or a new restriction leaves required compatibility unverified. Use it to separate hypotheses and check the behavior a proposed fix must preserve.
-- [Capability selection](references/capability-selection.md): an additional skill or tool might resolve a specific gap, but its suitability, prerequisites or downstream work are uncertain. Follow its local-first discovery and source review method; an optional registry search helper can find uninstalled candidates.
-- [Continuity](references/continuity.md): a requirement change, handoff or resumed task makes the validity of prior decisions or checks uncertain. Use it to identify affected evidence and preserve the rest. A clear local change needs no checkpoint.
+## Explain a material choice and reassess when needed
 
-## Use optional capabilities without creating dependencies
+In the user's language, briefly connect the task need to the chosen skill and its contribution. When this guidance actually informs a selection, identify Adaptive Workflow once with that decision. Distinguish a candidate being considered, instructions actually read and a capability actually used. Explain an important rejection or missing prerequisite when it changes the next action; an inventory, scorecard or fixed announcement format is unnecessary.
 
-This skill must remain usable with the host's existing tools. No external skill, framework or CLI is required.
+Reuse valid work. Reconsider the selection when the needed contribution is delivered, a prerequisite fails, or the task changes. End the additional workflow when its contribution is complete; do not continue into unrelated phases just because they appear in a skill. This does not waive required project checks or unfinished user requirements.
 
-Reuse a reliable session catalog when it is sufficient. Discover additional capabilities only for a specific unresolved need. Metadata, retrieval scores and disk presence do not establish relevance, current session availability or permission to execute.
-
-Before adopting another capability, read its relevant instructions and check required tools, project setup and downstream work. Load only necessary resources. If prerequisites are unavailable, explain the limitation and use a viable approach within existing authorization. Do not install or initialize external dependencies without authorization for that action.
-
-Resolve workflow conflicts under the applicable instruction hierarchy, user goals and project constraints. Preserve required checks. If borrowing only part of a method, describe the part actually used; do not claim full execution. Do not rewrite another capability or its invocation policy to remove a conflict.
-
-## Explain material decisions during the work
-
-Communicate in the user's language. At meaningful decisions or milestones, connect the relevant observation or unresolved gap to the selected approach, next action and behavior to verify. Limit claims to the scope actually inspected.
-
-When using this guidance, identify Adaptive Workflow once in the first substantive update alongside the evidence and decision it supports. This makes actual adoption visible without a separate activation banner. If it was only considered, describe it as a candidate rather than an active method.
-
-When adopting an optional capability, identify what was adopted, why it helps and which parts are used. Distinguish consideration, intended use and actual adoption. Do not announce an invocation before reading the required instructions.
-
-When evidence or requirements change, explain the affected decision, the work that remains valid and the next decisive check. Report substantive results as they become available, not solely in a retrospective summary.
-
-Keep these updates proportionate. A bounded edit may need only a short action and result update. Do not impose a fixed message count, repeat workflow banners, narrate every tool call, create display-only reports or invent uncertainty to make the skill noticeable. Explanations do not introduce new approval gates.
-
-## Adapt without restarting
-
-Refresh affected findings and acceptance criteria when code, requirements or observations change. Distinguish a newly requested contract from failure against the original contract.
-
-Retain still-valid evidence, completed changes and useful checks. Escalate only to address a demonstrated gap; reduce process once uncertainty resolves. Do not repeat investigations or regenerate equivalent artifacts merely because the method changes.
-
-If repeated attempts produce no new evidence, change the investigation approach. Continue authorized work autonomously; ask when a required business decision, permission or information is genuinely missing. Use delegated work only when current instructions permit it and its expected value warrants coordination cost.
-
-## Verify and finish
-
-Verify the requested behavior and relevant risks using appropriate checks. Follow required project validation. Reuse sufficient existing checks; extend coverage for actual gaps rather than to satisfy a process quota.
-
-Distinguish passed, failed, incomplete and unrun verification. Delivery must explain the actual change, evidence supporting acceptance and material remaining limitations. Do not claim comparative quality, speed or token savings without suitable comparative evidence.
-
-Stop adding work when the acceptance criteria are satisfied and relevant risks have been reasonably checked. Retain necessary authorization boundaries for destructive changes, production actions and sensitive data or permissions. Selecting a method never grants additional authority.
+The existing [investigation](references/investigation.md) and [continuity](references/continuity.md) notes are optional fallbacks when an unresolved cause or changed evidence prevents deciding which installed capability is useful. They are not extra stages for every task. Stop at the requested outcome and report actual verification and remaining limitations.

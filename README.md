@@ -1,172 +1,83 @@
 # Adaptive Workflow
 
-**A standalone development skill for choosing methods from evidence, explaining decisions, and verifying outcomes.**
+**Choose and coordinate the Codex skills you already have installed.**
 
-[Chinese documentation](README.zh-CN.md) · [Skill specification](skills/adaptive-workflow/SKILL.md) · [Evaluation](docs/evaluation.md) · [Contributing](CONTRIBUTING.md)
+[中文说明](README.zh-CN.md) · [Skill instructions](skills/adaptive-workflow/SKILL.md) · [Optional CLI](docs/router.md) · [Engineering checks](docs/evaluation.md)
 
-Adaptive Workflow helps Codex decide how to approach software development work after inspecting the relevant code, reported behavior and existing checks. It keeps clear changes direct, introduces additional methods for demonstrated gaps, and adjusts the approach when evidence or requirements change.
+Adaptive Workflow helps Codex decide whether an installed skill is useful for the current task, which candidate fits, and how to coordinate skills with overlapping workflows. Clear tasks can proceed directly. The goal is appropriate use of the existing library, with understandable decisions and no unnecessary process.
 
-The skill provides instructions and methods loaded for specific gaps. It works with the host's existing tools and has no required external skill, framework, service or command-line dependency. Optional helpers support file-state checks, explainable skill retrieval and commit-pinned source collection.
+The standalone skill works with the host's catalog and tools. It requires no additional framework, online service or command-line package. The names `adaptive-workflow` and `adaptive-skill-router` remain unchanged for compatibility; the latter is the equivalent project integration entry. Use one entry for a decision rather than loading both.
 
-Development currently focuses on the correctness, reliability, compatibility and usability of existing capabilities. Feature expansion and further default-Codex comparisons are paused. Earlier evaluations do not establish reliable superiority or general token savings; the [published report](docs/discovery-validation-2026-10-15.md) retains those results and limitations. See [engineering validation](docs/evaluation.md) for the current checks.
+## What it does
 
-## Core capabilities
-
-| Capability | Behavior |
+| Capability | Expected behavior |
 | --- | --- |
-| Investigation | Compares competing explanations, chooses distinguishing observations and checks identity, ordering and failure boundaries |
-| Proportionate execution | Handles bounded changes directly; introduces planning, investigation, testing or review when justified |
-| Visible decisions | Connects concrete findings to the chosen approach, next action and verification |
-| Task continuity | Binds prior findings to their dependencies, invalidates affected evidence after changes and preserves valid work |
-| Capability discovery and selection | Searches existing capabilities first, can discover uninstalled candidates, and reviews exact source instructions, prerequisites and downstream cost before adoption |
-| Verifiable delivery | Reports actual changes, completed checks and remaining limitations, then stops at acceptance |
+| Decide whether a skill helps | Identify a concrete contribution; choose no additional skill when existing reasoning and tools suffice |
+| Choose an installed candidate | Use descriptions to shortlist, then check actual instructions, prerequisites and required downstream work |
+| Coordinate overlapping workflows | Give each necessary skill a distinct contribution, resolve conflicts under user/project constraints and reuse completed work |
+| Reassess and stop | Change the selection when needs or prerequisites change, and end extra workflow when its contribution is complete |
 
-These capabilities are guidance for the host, not an autonomous task runner. The skill does not execute tools or select another capability outside the host's normal reasoning and permission controls.
+A material choice should explain the task need, the selected skill and what it contributes. An important rejection or missing prerequisite should be explained when it affects the next action. Inventories, repeated banners and selection reports are not required for ordinary work.
 
-## When to use it
+## Install
 
-Use it when exploration leaves an unresolved cause, a requirement that changes the solution, missing behavior coverage, an actual coordination need or a material review risk. It also applies when new evidence invalidates an earlier decision.
-
-A clear local edit usually needs only implementation and relevant verification. Task size, file count and the presence of available skills do not automatically justify a larger workflow.
-
-## Installation
-
-In Codex, request installation from this repository:
+Ask Codex:
 
 ```text
 Install the standalone skill from https://github.com/sky-k111/adaptive-skill-router/tree/main/skills/adaptive-workflow.
 ```
 
-Alternatively, copy the complete `skills/adaptive-workflow` directory to a supported skill location, such as `~/.agents/skills/adaptive-workflow`. Do not copy only the Markdown body. If the skill does not appear after installation, restart Codex. See [OpenAI's local skill documentation](https://learn.chatgpt.com/docs/build-skills).
+Alternatively, copy the entire `skills/adaptive-workflow` directory into a supported skill directory, such as `~/.agents/skills/adaptive-workflow`. Preserve its structure. Use a fresh session if the installed or updated entry is not reflected in the catalog. See [Codex skill documentation](https://developers.openai.com/codex/skills/) for host discovery details.
 
-Node.js is not required to follow the standalone skill. Optional helpers and the repository CLI require Node.js 22 or newer; host file and browsing tools remain valid alternatives.
+The standalone guidance needs no Node.js runtime. Optional repository tools and bundled scripts require Node.js 22 or newer; explicit proxy configuration needs Node.js 24.14+.
 
-## Usage
+## Use
 
-Explicitly request the skill alongside the development task:
-
-```text
-Use $adaptive-workflow to investigate this failure, make the necessary change, and verify the requested behavior.
-```
-
-Codex can also consider the installed skill when its description matches the task. Installation does not guarantee selection for every request. Project instructions and user requirements continue to govern execution.
-
-### Try it on a real task
-
-Start with a reproducible issue in your project. Include the observed behavior, expected result and a relevant command or test when available:
+State the task and constraints, for example:
 
 ```text
-Use $adaptive-workflow to fix this issue in the current project: [observed behavior]. Expected: [required behavior]. Reproduce with: [command or test].
+Use $adaptive-workflow to fix this intermittent failure using suitable installed skills. Preserve the existing test framework and avoid duplicate planning or review.
 ```
 
-Read the progress updates alongside the actual changes. You should be able to see which evidence supports the approach, why any additional method is needed, and what the checks establish. A clear fix may proceed directly. When the guidance is used, the first substantive update identifies Adaptive Workflow and the decision it supports.
-
-If the requirement changes during execution, state the new behavior explicitly. The next update should explain the affected decision and which completed work remains useful. This is a practical way to inspect adaptation; it is not a benchmark against default Codex.
-
-### Find a capability the project is missing
-
-Ask for the missing contribution, for example:
+Or ask about the library itself:
 
 ```text
-Use $adaptive-workflow to find a suitable skill for the browser interaction checks this project lacks. Check existing capabilities first, review source instructions and prerequisites, and explain the choice before adoption.
+Use $adaptive-workflow to explain which of my installed skills fit this task, where their workflows overlap, and whether any additional skill is actually needed.
 ```
 
-The host first checks available local skills. When they are insufficient, it can search external sources using its browsing tools or the bundled helper:
+The host may also consider the skill from its description. Installation does not guarantee activation on every message, and the skill does not intercept all conversations or control Codex's scheduler. Explicit user skill choices and applicable instruction/permission constraints remain authoritative.
 
-```sh
-node <skill-directory>/scripts/search-skills.mjs --query "browser interaction testing" --limit 5
-```
+For an intermittent defect, a useful decision might select an available investigation skill to establish the cause while deferring an unrelated planning workflow. A bounded text edit might need no additional skill. These illustrate intended judgment, not results of an executed task.
 
-The optional helper sends only the explicit query and optional owner/limit to skills.sh; use non-sensitive capability keywords. It does not read the project, install packages or execute discovered skills. GitHub-backed results include exact source identities and links, and remain unverified until the host reviews their actual instructions, prerequisites and compatibility. Popularity is not a quality score. Network failures, schema changes and successful empty results are distinct. See [capability selection](skills/adaptive-workflow/references/capability-selection.md) for the selection and authorization boundaries.
+## Optional local tools
 
-Discovery reranks the returned metadata by query-term coverage, retains provider rank, and supports repeatable `--require` / `--exclude` constraints with explicit remote filtering reasons. Scores describe text overlap; the host determines semantic suitability.
-
-The optional `collect-source.mjs` helper gathers a candidate's instructions, invocation metadata, licenses and bounded supporting files at one commit. Missing materials remain explicit, and collection does not mark a candidate as reviewed. See [source collection](docs/source-review.md).
-
-If your network needs an existing trusted proxy, the helper supports `--proxy URL` or `ASR_HTTPS_PROXY` on Node.js 24.14+. The repository CLI also supports a private project setting. No machine-specific proxy is shipped, and certificate validation remains enabled. See [proxy setup and runtime compatibility](docs/router.md#existing-proxy-support).
-
-For combined local and optional online discovery, the repository CLI adds `discover "keywords"` and `discover "keywords" --online`; see [router commands](docs/router.md). Discovery does not require a separately installed discovery skill or package manager. The standalone helper is optional and uses the external search endpoint used by the registry's own CLI; continued availability is not guaranteed.
-
-Local candidates include an inspection token. `inspect --expect` checks that their entry instructions, invocation metadata and resolved paths still match the selected version; see [inspection scope and limits](docs/router.md#reading-the-version-that-was-selected).
-
-## What appears in the conversation
-
-At meaningful decisions, progress updates explain:
-
-- What the inspected evidence establishes and what remains unresolved.
-- Why the chosen method is appropriate and what it will verify.
-- How new evidence changes the approach and which work remains valid.
-- What the completed checks establish and what has not been verified.
-
-For example, an investigation may produce:
-
-> The current test covers repeated reads for one account, but the cache key omits account identity. I will check cross-account results and load counts, then repair the affected boundary.
-
-This is an illustrative update, not a fixed script. Small edits need fewer updates. The skill does not require repeated activation announcements, tool-by-tool narration or extra reports.
-
-## Execution boundaries
-
-### Methods loaded when needed
-
-The entry links to three operational references, each with its own trigger:
-
-- [Investigation](skills/adaptive-workflow/references/investigation.md) helps choose a check that can distinguish unresolved explanations, including deterministic checks of asynchronous ordering.
-- [Capability selection](skills/adaptive-workflow/references/capability-selection.md) evaluates the useful contribution and total cost of a candidate, including partial use and unavailable prerequisites.
-- [Continuity](skills/adaptive-workflow/references/continuity.md) helps resume or revise a task by tracing which findings depend on changed files, requirements or environment.
-
-They are not required phases. A clear local change does not require loading these references or creating a checkpoint.
-
-For a handoff that needs durable file evidence, the continuity reference documents an optional helper:
-
-```sh
-node <skill-directory>/scripts/check-evidence.mjs capture --root <project> --output <project>/local-evidence.json <relative-file> ...
-node <skill-directory>/scripts/check-evidence.mjs check --root <project> --record <project>/local-evidence.json
-```
-
-It records explicitly selected files and reports unchanged, changed or missing state. It refuses an existing output record and paths outside the selected project. Unchanged files do not prove that tests passed, that all dependencies were selected or that the environment is unchanged. Keep records local: they contain project paths. See the continuity reference for exit codes and limitations.
-
-### Scope and authority
-
-The specification requires evidence before escalation, checks proportionate to the consequences, truthful reporting and reuse of valid work. It prohibits invented findings, unsupported invocation claims and scope expansion merely to accommodate a method.
-
-Optional resources do not become mandatory dependencies. Their instructions must be inspected before adoption, and their prerequisites must be available. Using part of a method must be reported as partial use.
-
-Method selection never grants additional authority. Required project checks and applicable permission boundaries remain in force. Once acceptance is satisfied, optional improvements do not become unfinished delivery.
-
-## Repository structure
-
-| Path | Purpose |
-| --- | --- |
-| `skills/adaptive-workflow/` | Canonical instructions, operational references, optional helper and interface metadata |
-| `skills/adaptive-skill-router/` | Optional project guidance, candidate retrieval reference and portable copies of the methods |
-| `src/` | Optional CLI implementation |
-| `test/`, `fixtures/`, `examples/` | Implementation checks, test fixtures and evidence examples |
-| `scripts/` | Reproducible evaluation tools |
-| `docs/` | Architecture, CLI reference and evaluation limits |
-
-The standalone skill does not depend on the project router. See the [optional router reference](docs/router.md) if local discovery or structured candidate retrieval is needed.
-
-## Validation and support
-
-Current support is limited to Codex. The canonical skill and interface metadata are written in English; user-facing communication follows the user's language. Chinese documentation is maintained separately.
-
-To check the repository's implementation and routing policies:
+When the current session catalog is insufficient, the repository CLI can inventory local skills, search metadata and inspect a candidate's instructions. It retrieves candidates; Codex makes the semantic choice.
 
 ```sh
 npm ci
-npm run check
+npm run build
+node dist/cli.js discover "capability keywords" --cwd /path/to/project --json
+node dist/cli.js inspect <exact-id> --expect <inspectionFingerprint> --cwd /path/to/project --json
 ```
 
-These checks require Node.js 22 or newer. Passing them establishes the tested behavior, not superior agent quality or reduced token usage. Behavioral evaluation methods and limitations are documented in [Evaluation](docs/evaluation.md). Local logs, private configurations and generated installations are excluded from published source.
+Project-local integration is optional. Preview it with `node dist/cli.js init --cwd /path/to/project`; `--write` applies it with conflict checks and backups. See the [CLI reference](docs/router.md) for commands and boundaries.
 
-A [repeated behavior trial](docs/benchmark-2026-10-11.md) found less input usage on a clear repair with a shared process-skill library, while independent acceptance stayed equal. It found no repeated advantage over bare Codex. The report includes all outcomes and limits; it does not establish automatic activation or general savings.
+Disk discovery is not proof of availability in the current conversation. Native discovery describes a fresh CLI process. Disabled, explicit-only and unverified-cache states remain distinct; matching names do not establish identical sources. Inspection tokens detect changes to entry instructions, invocation metadata and resolved paths, not all supporting files or runtime permissions.
 
-A [real-project archive repair](docs/real-project-2026-10-11.md) passed the frozen checks across all configurations but exposed compatibility regressions during additional review. It did not establish a stable quality or cost advantage. The report records the preparation flaw, all outcomes and the targeted guidance correction.
+## Scope and retained utilities
 
-A [frozen-version comparison on two new source defects](docs/heldout-2026-10-11.md) completed twelve fresh conversations with identical acceptance across all three configurations. Neither its registered quality signal nor repeated input-reduction threshold was reached. The report preserves every result and distinguishes clean source preparation from uncontrolled shared dependencies and caching.
+External search, pinned source collection and selected-file fingerprints remain available as optional utilities. External discovery is for an explicit request to find or assess additional skills; a local mismatch does not automatically start a search or installation. These utilities are outside the default installed-skill selection path. See [source collection](docs/source-review.md) and the [CLI reference](docs/router.md) when that separate work is requested.
+
+This project does not provide a global scheduler, automatic dependency setup or permission bypass. Descriptions and scores cannot authorize execution. Required project checks and unfinished user requirements still apply when an extra workflow ends.
+
+## Engineering quality and evidence
+
+Development prioritizes correctness, compatibility and usability of shipped capabilities. Feature expansion and further default-Codex comparisons are paused.
+
+Run `npm run check` for implementation tests and deterministic routing regressions. These checks do not establish better model reasoning or token savings. [Engineering validation and historical evidence](docs/evaluation.md) retains prior results, including comparisons that did not establish a reliable advantage. Private configuration, raw task evidence and generated integrations are not distributed.
 
 ## Contributing and license
 
-See [Contributing](CONTRIBUTING.md) for development and reporting requirements. Report reproducible problems through [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues).
+See [Contributing](CONTRIBUTING.md). Report reproducible problems through [GitHub Issues](https://github.com/sky-k111/adaptive-skill-router/issues).
 
-Licensed under [MIT](LICENSE). Copyright © 2026 Ethan Chen.
+Released under the [MIT License](LICENSE). Copyright © 2026 Ethan Chen.

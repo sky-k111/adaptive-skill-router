@@ -1,7 +1,7 @@
 {
   "name": "adaptive-skill-router",
   "version": "0.1.0",
-  "description": "Explore first. Discover local Codex skills and choose only the workflow a task needs.",
+  "description": "Choose and coordinate installed Codex skills for the current task.",
   "type": "module",
   "engines": { "node": ">=22" },
   "bin": { "asr": "dist/cli.js" },

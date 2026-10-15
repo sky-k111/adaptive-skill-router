@@ -1,4 +1,4 @@
 interface:
   display_name: "Adaptive Workflow"
-  short_description: "Explore first; explain choices, adjustments and verified results"
-  default_prompt: "Use $adaptive-workflow to inspect the evidence, choose a proportionate method, explain material decisions, and verify the requested outcome."
+  short_description: "Choose and coordinate installed skills for the current task"
+  default_prompt: "Use $adaptive-workflow to decide whether the task needs an installed skill, choose suitable candidates and coordinate their use without duplicate workflows."

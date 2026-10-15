@@ -2,6 +2,8 @@
 
 Explain the concrete failure or unmet task need before adding another workflow stage. Small changes should stay small. Host adapters beyond Codex are deferred until Codex behavior and discovery limits have useful evidence.
 
+The primary use case is selecting and coordinating already-installed skills. Keep normal selection local and reuse the host catalog; missing candidates do not automatically start external discovery. Remote utilities remain supported for explicitly requested work, outside the primary usage path.
+
 Development currently focuses on hardening existing capabilities, not expanding the feature set. Prioritize reproducible correctness, useful failure diagnostics, compatibility and usable documentation. Additional default-Codex comparison campaigns are paused; existing reports remain available as historical evidence, not a requirement for routine fixes.
 
 Use Node.js 22 or newer, run `npm ci`, and run `npm run check`. Add tests for meaningful behavior changes; do not mirror the implementation just to increase counts. Keep generated `dist/`, local evaluations, private task text and instruction backups out of commits.

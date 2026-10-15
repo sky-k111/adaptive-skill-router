@@ -11,7 +11,7 @@ import { configureCliProxy } from '../skills/adaptive-workflow/scripts/search-sk
 import { collectSkillSource, validateSource } from '../skills/adaptive-workflow/scripts/collect-source.mjs';
 import type { ScanOptions, Root } from './types.js';
 
-const HELP = `Adaptive Skill Router 0.1.0 — Codex, explore first.
+const HELP = `Adaptive Skill Router 0.1.0 — Choose and coordinate installed Codex skills.
 
   asr scan [--cwd PATH] [--root PATH] [--include-plugin-cache] [--json]
   asr discover "CAPABILITY KEYWORDS" [--online] [--owner OWNER] [--require TERM] [--exclude TERM] [--proxy URL] [--limit 5] [--json]

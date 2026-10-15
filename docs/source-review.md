@@ -2,6 +2,8 @@
 
 Source collection supplies material for the host's assessment. It does not make a semantic selection, interpret license terms, authorize installation or execute fetched content.
 
+This retained utility serves an explicit request to find or assess external skills. Managing already-installed skills does not require it, and a missing local match does not automatically initiate source collection.
+
 ## Commands
 
 The standalone skill needs no package installation:
